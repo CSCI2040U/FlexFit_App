@@ -11,7 +11,7 @@ ScreenManager:
     LoginScreen:
     SignUpScreen:
     UserInfoScreen:
-    MainScreen:
+    HomeScreen:
 
 <SplashScreen>:
     name: "splash"
@@ -90,7 +90,7 @@ ScreenManager:
             md_bg_color: 0.6, 0.4, 1, 1
             size_hint_x: 0.8
             pos_hint: {"center_x": 0.5}
-            on_release: app.switch_to_main()
+            on_release: app.switch_to_home()
 
         MDTextButton:
             text: "Forgot Password?"
@@ -311,15 +311,106 @@ ScreenManager:
             md_bg_color: 0.6, 0.4, 1, 1
             on_release: app.complete_user_info()
 
-
-<MainScreen>:
-    name: "main"
+<HomeScreen>:
+    name: "home"
     MDBoxLayout:
-        orientation: 'vertical'
+        orientation: "vertical"
         md_bg_color: 1, 1, 1, 1
+        padding: "10dp"
 
-        MDLabel:
-            text: "Welcome to FlexFit!"
-            halign: "center"
-            font_style: "H4"
-            theme_text_color: "Primary"
+        # Search Bar
+        MDTextField:
+            id: search_field
+            hint_text: "Search"
+            mode: "rectangle"
+            icon_right: "magnify"
+            size_hint_x: 0.9
+            pos_hint: {"center_x": 0.5}
+            height: "50dp"
+            md_bg_color: 0.95, 0.92, 1, 1
+            radius: [25,]
+
+        # Scrollable Workout Categories
+        ScrollView:
+            MDBoxLayout:
+                orientation: "vertical"
+                padding: "10dp"
+                spacing: "10dp"
+                size_hint_y: None
+                height: self.minimum_height
+
+                # Indoor Workout Card
+                MDCard:
+                    size_hint_x: 0.9
+                    height: "150dp"
+                    radius: [15,]
+                    pos_hint: {"center_x": 0.5}
+                    on_release: app.open_category("Indoor")
+                    FitImage:
+                        source: "assets/indoor_workout.jpg"
+                    MDLabel:
+                        text: "INDOOR"
+                        bold: True
+                        halign: "center"
+                        pos_hint: {"center_y": 0.5}
+                        theme_text_color: "Custom"
+                        text_color: 0.6, 0.4, 1, 1
+                        font_size: "22sp"
+
+                # Outdoor Workout Card
+                MDCard:
+                    size_hint_x: 0.9
+                    height: "150dp"
+                    radius: [15,]
+                    pos_hint: {"center_x": 0.5}
+                    on_release: app.open_category("Outdoor")
+                    FitImage:
+                        source: "assets/outdoor_workout.jpg"
+                    MDLabel:
+                        text: "OUTDOOR"
+                        bold: True
+                        halign: "center"
+                        pos_hint: {"center_y": 0.5}
+                        theme_text_color: "Custom"
+                        text_color: 0.6, 0.4, 1, 1
+                        font_size: "22sp"
+
+                # Wellness Workout Card
+                MDCard:
+                    size_hint_x: 0.9
+                    height: "150dp"
+                    radius: [15,]
+                    pos_hint: {"center_x": 0.5}
+                    on_release: app.open_category("Wellness")
+                    FitImage:
+                        source: "assets/wellness_workout.jpg"
+                    MDLabel:
+                        text: "WELLNESS"
+                        bold: True
+                        halign: "center"
+                        pos_hint: {"center_y": 0.5}
+                        theme_text_color: "Custom"
+                        text_color: 0.6, 0.4, 1, 1
+                        font_size: "22sp"
+
+        # Bottom Navigation Bar
+        MDBottomNavigation:
+            size_hint_y: None
+            height: "60dp"
+            MDBottomNavigationItem:
+                name: "home"
+                icon: "home"
+                text: "Home"
+                on_tab_press: app.switch_to_home()
+
+            MDBottomNavigationItem:
+                name: "saved"
+                icon: "bookmark"
+                text: "Saved"
+                on_tab_press: app.switch_to_saved()
+
+            MDBottomNavigationItem:
+                name: "user"
+                icon: "account"
+                text: "User"
+                on_tab_press: app.switch_to_user()

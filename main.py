@@ -16,7 +16,7 @@ class SignUpScreen(Screen):
 class UserInfoScreen(Screen):
     pass
 
-class MainScreen(Screen):
+class HomeScreen(Screen):
     pass
 
 class PasswordTextField(MDTextField):
@@ -40,7 +40,7 @@ class MainApp(MDApp):
         self.sm.add_widget(LoginScreen(name="login"))
         self.sm.add_widget(SignUpScreen(name="signup"))
         self.sm.add_widget(UserInfoScreen(name="user_info"))
-        self.sm.add_widget(MainScreen(name="main"))
+        self.sm.add_widget(HomeScreen(name="home"))
         return Builder.load_file("flexfit.kv")
 
     def switch_to_login(self):
@@ -49,8 +49,8 @@ class MainApp(MDApp):
     def switch_to_signup(self):
         self.root.current = "signup"
 
-    def switch_to_main(self):
-        self.root.current = "main"
+    def switch_to_home(self):
+        self.root.current = "home"
 
     def switch_to_user_info(self):
         """After Sign-Up, go to user details screen."""
@@ -76,7 +76,7 @@ class MainApp(MDApp):
         self.user_info["height"] = screen.ids.height.text
         self.user_info["weight"] = screen.ids.weight.text
         print(f"User Info Saved: {self.user_info}")
-        self.switch_to_main()  # Proceed to Dashboard
+        self.switch_to_home()  # Proceed to Dashboard
 
     def open_date_picker(self):
         """Safely opens the date picker without crashing."""
@@ -118,6 +118,14 @@ class MainApp(MDApp):
             return (0.6, 0.4, 1, 1)
         return (0.95, 0.92, 1, 1)
 
+    def open_category(self):
+        print(f"Opening {category} workouts!")
+
+    def switch_to_saved(self):
+        print("Saved Workouts Clicked!")  # Placeholder for future
+
+    def switch_to_user(self):
+        print("User profile Clicked!") #Placeholder for future
 
 if __name__ == "__main__":
     MainApp().run()
