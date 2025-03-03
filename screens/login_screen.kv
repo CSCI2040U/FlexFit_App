@@ -1,0 +1,82 @@
+<LoginScreen>:
+    name: "login"
+
+    MDBoxLayout:
+        orientation: "vertical"
+        md_bg_color: 1, 1, 1, 1
+        spacing: "20dp"
+        padding: "50dp"
+
+        MDLabel:
+            text: "Login"
+            font_style: "H4"
+            halign: "center"
+            theme_text_color: "Primary"
+
+        MDTextField:
+            id: login_email
+            hint_text: "Email"
+            icon_right: "email"
+            mode: "rectangle"
+            size_hint_x: 0.8
+            pos_hint: {"center_x": 0.5}
+
+        PasswordTextField:  # Now recognized correctly
+            id: login_password
+            hint_text: "Password"
+            password: True
+            mode: "rectangle"
+            size_hint_x: 0.8
+            pos_hint: {"center_x": 0.5}
+            icon_right: "eye-off"
+
+            MDCard:
+                size_hint: None, None
+                size: "35dp", "35dp"
+                radius: [17,]  # Rounded like a circle
+                md_bg_color: 0.9, 0.9, 0.9, 1  # Light gray background
+                pos_hint: {"center_x": 0.97, "center_y": 0.5}
+
+                MDIconButton:
+                    id: password_toggle
+                    icon: "eye-off"
+                    size_hint: None, None
+                    size: "30dp", "30dp"
+                    on_release: root.toggle_password_visibility()
+
+        MDRaisedButton:
+            text: "Login"
+            md_bg_color: 0.6, 0.4, 1, 1
+            size_hint_x: 0.8
+            pos_hint: {"center_x": 0.5}
+            on_release: app.switch_to_home()
+
+        MDTextButton:
+            text: "Forgot Password?"
+            pos_hint: {"center_x": 0.5}
+            theme_text_color: "Primary"
+
+        MDCard:
+            size_hint: None, None
+            size: "45dp", "45dp"  # Square shape
+            elevation: 0.75  # Adds shadow for depth
+            radius: [50,]  # Rounded edges like in your image
+            md_bg_color: 1, 1, 1, 1  # White background
+            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+
+            MDIconButton:
+                icon: "assets/google_logo.png"
+                size_hint: None, None
+                size: "40dp", "40dp"
+                theme_icon_color: "Custom"
+                icon_color: 1, 1, 1, 1  # Keeps original Google logo colors
+                pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                on_release: app.google_sign_in()
+
+        MDLabel:
+            text: "Don't have an account? [ref=signup][b]Sign Up[/b][/ref]"
+            markup: True
+            theme_text_color: "Custom"
+            text_color: 0.2, 0.4, 1, 1  # Blue hyperlink color
+            halign: "center"
+            on_ref_press: app.switch_to_signup()

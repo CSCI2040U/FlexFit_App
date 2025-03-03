@@ -1,0 +1,62 @@
+<SignUpScreen>:
+    name: "signup"
+
+    MDBoxLayout:
+        orientation: "vertical"
+        md_bg_color: 1, 1, 1, 1
+        spacing: "20dp"
+        padding: "50dp"
+
+        MDLabel:
+            text: "Sign Up"
+            font_style: "H4"
+            halign: "center"
+            theme_text_color: "Primary"
+
+        MDTextField:
+            id: signup_name
+            hint_text: "Full Name"
+            icon_right: "account"
+            mode: "rectangle"
+            size_hint_x: 0.8
+            pos_hint: {"center_x": 0.5}
+
+        MDTextField:
+            id: signup_email
+            hint_text: "Email"
+            icon_right: "email"
+            mode: "rectangle"
+            size_hint_x: 0.8
+            pos_hint: {"center_x": 0.5}
+
+        PasswordTextField:
+            id: signup_password
+            hint_text: "Password"
+            password: True
+            mode: "rectangle"
+            size_hint_x: 0.8
+            pos_hint: {"center_x": 0.5}
+
+        PasswordTextField:
+            id: signup_confirm_password
+            hint_text: "Confirm Password"
+            password: True
+            icon_right: "eye-off"
+            mode: "rectangle"
+            size_hint_x: 0.8
+            pos_hint: {"center_x": 0.5}
+
+        MDRaisedButton:
+            text: "Sign Up"
+            md_bg_color: 0.6, 0.4, 1, 1
+            size_hint_x: 0.8
+            pos_hint: {"center_x": 0.5}
+            on_release: app.switch_to_user_info()
+
+        MDLabel:
+            text: "Already have an account? [ref=login][b]Log In[/b][/ref]"
+            markup: True
+            theme_text_color: "Custom"
+            text_color: 0.2, 0.4, 1, 1  # Blue hyperlink color
+            halign: "center"
+            on_ref_press: app.switch_to_login()

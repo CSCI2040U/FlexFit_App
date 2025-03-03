@@ -68,6 +68,7 @@ class MainApp(MDApp):
 
     def switch_to_saved(self):
         """Navigate to Saved Screen (Placeholder)."""
+        self.root.current = "saved"
         print("Saved Workouts Clicked!")
 
     def switch_to_user(self):
