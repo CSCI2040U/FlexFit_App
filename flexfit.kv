@@ -12,6 +12,8 @@ ScreenManager:
     SignUpScreen:
     UserInfoScreen:
     HomeScreen:
+    SavedScreen:
+    UserScreen:
 
 <SplashScreen>:
     name: "splash"
@@ -313,104 +315,240 @@ ScreenManager:
 
 <HomeScreen>:
     name: "home"
-    MDBoxLayout:
-        orientation: "vertical"
-        md_bg_color: 1, 1, 1, 1
-        padding: "10dp"
 
-        # Search Bar
-        MDTextField:
-            id: search_field
-            hint_text: "Search"
-            mode: "rectangle"
-            icon_right: "magnify"
-            size_hint_x: 0.9
-            pos_hint: {"center_x": 0.5}
-            height: "50dp"
-            md_bg_color: 0.95, 0.92, 1, 1
-            radius: [25,]
+    MDScreen:
 
-        # Scrollable Workout Categories
-        ScrollView:
+        MDBoxLayout:
+            orientation: 'vertical'
+            size_hint_y: 1
+            MDTextField:
+                id: search_field
+                hint_text: "Search"
+                mode: "rectangle"
+                icon_right: "magnify"
+                size_hint_x: 0.9
+                size_hint_y: 1/5
+                pos_hint: {"center_x": 0.5}
+                height: "40dp"
+                md_bg_color: 0.95, 0.92, 1, 1
+                radius: [25,]
+
             MDBoxLayout:
                 orientation: "vertical"
-                padding: "10dp"
-                spacing: "10dp"
-                size_hint_y: None
-                height: self.minimum_height
+                adaptive_height: True
+                padding: dp(10)
+                size_hint_y: 1
 
-                # Indoor Workout Card
-                MDCard:
-                    size_hint_x: 0.9
-                    height: "150dp"
-                    radius: [15,]
-                    pos_hint: {"center_x": 0.5}
-                    on_release: app.open_category("Indoor")
-                    FitImage:
-                        source: "assets/indoor_workout.jpg"
-                    MDLabel:
-                        text: "INDOOR"
-                        bold: True
-                        halign: "center"
-                        pos_hint: {"center_y": 0.5}
-                        theme_text_color: "Custom"
-                        text_color: 0.6, 0.4, 1, 1
-                        font_size: "22sp"
+                MDLabel:
+                    text: "Workouts"
+                    font_style: "H6"
+                    size_hint_y: None
+                    height: self.texture_size[1]
 
-                # Outdoor Workout Card
-                MDCard:
-                    size_hint_x: 0.9
-                    height: "150dp"
-                    radius: [15,]
-                    pos_hint: {"center_x": 0.5}
-                    on_release: app.open_category("Outdoor")
-                    FitImage:
-                        source: "assets/outdoor_workout.jpg"
-                    MDLabel:
-                        text: "OUTDOOR"
-                        bold: True
-                        halign: "center"
-                        pos_hint: {"center_y": 0.5}
-                        theme_text_color: "Custom"
-                        text_color: 0.6, 0.4, 1, 1
-                        font_size: "22sp"
+                MDBoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: 1
 
-                # Wellness Workout Card
-                MDCard:
-                    size_hint_x: 0.9
-                    height: "150dp"
-                    radius: [15,]
-                    pos_hint: {"center_x": 0.5}
-                    on_release: app.open_category("Wellness")
-                    FitImage:
-                        source: "assets/wellness_workout.jpg"
-                    MDLabel:
-                        text: "WELLNESS"
-                        bold: True
-                        halign: "center"
-                        pos_hint: {"center_y": 0.5}
-                        theme_text_color: "Custom"
-                        text_color: 0.6, 0.4, 1, 1
-                        font_size: "22sp"
+                    MDCard:
+                        radius: dp(10)
+                        md_bg_color: 0.9, 0.9, 1, 1
+                        BoxLayout:
+                            orientation: 'vertical'
+                            Image:
+                                source: 'logo.png'  # Replace with actual image path
+                                size_hint_y: 1/3
+                            MDLabel:
+                                text: "With Equipment"
+                                halign: "center"
 
-        # Bottom Navigation Bar
-        MDBottomNavigation:
+                    MDCard:
+                        radius: dp(10)
+                        md_bg_color: 0.9, 0.9, 1, 1
+                        BoxLayout:
+                            orientation: 'vertical'
+                            Image:
+                                source: 'assets/wellness_workout.jpg'  # Replace with actual image path
+                                size_hint_y: 1/3
+                            MDLabel:
+                                text: "Wellness"
+                                halign: "center"
+
+                    MDCard:
+                        radius: dp(10)
+                        md_bg_color: 0.9, 0.9, 1, 1
+                        BoxLayout:
+                            orientation: 'vertical'
+                            Image:
+                                source: 'assets/wellness_workout.jpg'  # Replace with actual image path
+                                size_hint_y: 1/3
+                            MDLabel:
+                                text: "Without Equipment"
+                                halign: "center"
+
+            MDBottomNavigation:
+                id: bottom_nav
+                height: "60dp"
+                panel_color: "#eeeeee"
+                pos_hint: {"bottom": 1}
+
+                MDBottomNavigationItem:
+                    name: "home"
+                    text: "Home"
+                    icon: "home"
+                    on_tab_press: app.switch_to_home()
+
+                MDBottomNavigationItem:
+                    name: "saved"
+                    text: "Saved"
+                    icon: "bookmark"
+                    on_tab_press: app.switch_to_saved()
+
+                MDBottomNavigationItem:
+                    name: "user"
+                    text: "User"
+                    icon: "account"
+                    on_tab_press: app.switch_to_user()
+
+
+
+<SavedScreen>
+    name: 'saved'
+
+<UserScreen>
+    name: 'user'
+    MDBoxLayout:
+        orientation: 'vertical'
+        padding: dp(10)
+        spacing: dp(10)
+
+        # Profile Section
+        MDBoxLayout:
+            orientation: 'horizontal'
             size_hint_y: None
-            height: "60dp"
+            height: dp(100)
+
+            Image:
+                source: "logo.png"
+                size_hint: None, None
+                size: dp(80), dp(80)
+                allow_stretch: True
+                keep_ratio: True
+                pos_hint: {'center_y': 0.5}
+
+            MDBoxLayout:
+                orientation: 'vertical'
+                spacing: dp(5)
+                pos_hint: {'center_y': 0.5}
+
+                MDLabel:
+                    text: "Hello User!"
+                    bold: True
+                    font_style: "H5"
+
+                MDBoxLayout:
+                    orientation: 'horizontal'
+
+                    MDCard:
+                        size_hint_x: None
+                        width: dp(150)
+                        elevation: 2
+                        radius: [10]
+                        padding: dp(5)
+
+                        MDBoxLayout:
+                            orientation: 'vertical'
+                            spacing: dp(5)
+                            MDLabel:
+                                text: "Height - 5'10\""
+                            MDRaisedButton:
+                                text: "Edit"
+                                size_hint_x: None
+                                width: dp(60)
+                                font_size: "12sp"
+
+                    MDCard:
+                        size_hint_x: None
+                        width: dp(150)
+                        elevation: 2
+                        radius: [10]
+                        padding: dp(5)
+
+                        MDBoxLayout:
+                            orientation: 'vertical'
+                            spacing: dp(5)
+                            MDLabel:
+                                text: "Weight - 80kg"
+                            MDRaisedButton:
+                                text: "Edit"
+                                size_hint_x: None
+                                width: dp(60)
+                                font_size: "12sp"
+
+        # Progress Indicators Section
+        MDBoxLayout:
+            orientation: 'vertical'
+            padding: dp(10)
+            spacing: dp(10)
+
+            Widget:
+                size_hint_y: None
+                height: dp(140)
+                canvas.before:
+                    Color:
+                        rgba: 0.5, 0.2, 0.8, 1
+                    Line:
+                        width: 3
+                        circle: (self.center_x, self.center_y, 60, 0, 180)
+
+            MDLabel:
+                text: "1600/2000"
+                halign: "center"
+                font_style: "H6"
+
+            MDRaisedButton:
+                text: "Calories Goal"
+                size_hint_x: None
+                width: dp(140)
+                pos_hint: {"center_x": 0.5}
+
+            MDProgressBar:
+                value: 80
+                pos_hint: {"center_x": 0.5}
+                size_hint_x: 0.9
+
+            MDLabel:
+                text: "240/300 mins."
+                halign: "center"
+                font_style: "H6"
+
+            MDRaisedButton:
+                text: "Weekly Time Spent"
+                size_hint_x: None
+                width: dp(180)
+                pos_hint: {"center_x": 0.5}
+
+        MDLabel:
+            text: "Making good progress!"
+            halign: "center"
+            font_style: "H5"
+
+        # Bottom Navigation
+        MDBottomNavigation:
+            height: dp(60)
+            panel_color: "#eeeeee"
+            pos_hint: {"bottom": 1}
+
             MDBottomNavigationItem:
                 name: "home"
-                icon: "home"
                 text: "Home"
-                on_tab_press: app.switch_to_home()
+                icon: "home"
 
             MDBottomNavigationItem:
                 name: "saved"
-                icon: "bookmark"
                 text: "Saved"
-                on_tab_press: app.switch_to_saved()
+                icon: "bookmark"
 
             MDBottomNavigationItem:
                 name: "user"
-                icon: "account"
                 text: "User"
-                on_tab_press: app.switch_to_user()
+                icon: "account"
