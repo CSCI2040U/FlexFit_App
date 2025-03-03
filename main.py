@@ -16,7 +16,13 @@ class SignUpScreen(Screen):
 class UserInfoScreen(Screen):
     pass
 
-class MainScreen(Screen):
+class HomeScreen(Screen):
+    pass
+
+class SavedScreen(Screen):
+    pass
+
+class UserScreen(Screen):
     pass
 
 class PasswordTextField(MDTextField):
@@ -40,7 +46,9 @@ class MainApp(MDApp):
         self.sm.add_widget(LoginScreen(name="login"))
         self.sm.add_widget(SignUpScreen(name="signup"))
         self.sm.add_widget(UserInfoScreen(name="user_info"))
-        self.sm.add_widget(MainScreen(name="main"))
+        self.sm.add_widget(HomeScreen(name="home"))
+        self.sm.add_widget(SavedScreen(name="saved"))
+        self.sm.add_widget(UserScreen(name="user"))
         return Builder.load_file("flexfit.kv")
 
     def switch_to_login(self):
@@ -49,12 +57,27 @@ class MainApp(MDApp):
     def switch_to_signup(self):
         self.root.current = "signup"
 
-    def switch_to_main(self):
-        self.root.current = "main"
-
     def switch_to_user_info(self):
         """After Sign-Up, go to user details screen."""
         self.root.current = "user_info"
+
+    def switch_to_home(self):
+        """Navigate to Home Screen."""
+        self.root.current = "home"
+        print("Home Clicked!")
+
+    def switch_to_saved(self):
+        """Navigate to Saved Screen (Placeholder)."""
+        print("Saved Workouts Clicked!")
+
+    def switch_to_user(self):
+        """Navigate to User Profile (Placeholder)."""
+        self.root.current = "user"
+        print("User Profile Clicked!")
+
+    def open_category(self, category):
+        """Handles category click events."""
+        print("Opening {} Workouts!".format(category))  # Fixes f-string issue
 
     def google_sign_in(self):
         """Show a popup to simulate Google Sign-In."""
@@ -76,7 +99,7 @@ class MainApp(MDApp):
         self.user_info["height"] = screen.ids.height.text
         self.user_info["weight"] = screen.ids.weight.text
         print(f"User Info Saved: {self.user_info}")
-        self.switch_to_main()  # Proceed to Dashboard
+        self.switch_to_home()  # Proceed to Dashboard
 
     def open_date_picker(self):
         """Safely opens the date picker without crashing."""
@@ -117,6 +140,10 @@ class MainApp(MDApp):
         if self.user_info["gender"] == gender:
             return (0.6, 0.4, 1, 1)
         return (0.95, 0.92, 1, 1)
+
+    def open_category(self, category):
+        """Handles category click events."""
+        print("Opening {} Workouts!".format(category))  # Fixes f-string issue
 
 
 if __name__ == "__main__":
