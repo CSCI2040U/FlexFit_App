@@ -1,0 +1,123 @@
+<UserInfoScreen>:
+    name: "user_info"
+
+    MDBoxLayout:
+        orientation: "vertical"
+        md_bg_color: 1, 1, 1, 1
+        padding: "30dp"
+        spacing: "20dp"
+
+        MDLabel:
+            text: "Hey there,"
+            font_style: "H6"
+            halign: "center"
+            theme_text_color: "Primary"
+
+        MDLabel:
+            text: "[b]Tell Us More About You[/b]"
+            markup: True
+            font_style: "H5"
+            halign: "center"
+            theme_text_color: "Primary"
+
+        # 🔹 Birthdate Input (Fixed)
+        MDCard:
+            size_hint_x: 0.9
+            pos_hint: {"center_x": 0.5}
+            padding: "15dp"
+            radius: [15,]
+
+
+            MDBoxLayout:
+                orientation: "horizontal"
+                spacing: "10dp"
+
+                MDTextField:
+                    id: birthdate
+                    hint_text: "mm/dd/yyyy"
+                    mode: "rectangle"
+                    size_hint_x: 0.8
+                    pos_hint: {"center_x": 0.5}
+                    readonly: True  # Prevents keyboard from opening
+
+                MDIconButton:
+                    icon: "calendar"
+                    pos_hint: {"center_x": 0.5}
+                    on_release: app.open_date_picker()
+
+        # Gender Selection Label
+        MDBoxLayout:
+            orientation: "horizontal"
+            size_hint_x: 0.9
+            pos_hint: {"center_x": 0.5}
+            spacing: "30dp"
+
+            MDCard:
+                id: male_card
+                size_hint: None, None
+                size: "80dp", "80dp"
+                radius: [15,]
+                md_bg_color: app.get_gender_color("male")
+                on_release: app.select_gender("male")
+
+                MDBoxLayout:
+                    orientation: "vertical"
+                    padding: "10dp"
+                    spacing: "5dp"
+                    pos_hint: {"center_x": 0.5, "center_y": 0.5}
+
+                    MDIconButton:
+                        icon: "human-male"
+                        pos_hint: {"center_x": 0.5}
+
+                    MDLabel:
+                        text: "Male"
+                        halign: "center"
+                        theme_text_color: "Secondary"
+
+            MDCard:
+                id: female_card
+                size_hint: None, None
+                size: "80dp", "80dp"
+                radius: [15,]
+                md_bg_color: app.get_gender_color("female")
+                on_release: app.select_gender("female")
+
+                MDBoxLayout:
+                    orientation: "vertical"
+                    padding: "10dp"
+                    spacing: "5dp"
+                    pos_hint: {"center_x": 0.5, "center_y": 0.5}
+
+                    MDIconButton:
+                        icon: "human-female"
+                        pos_hint: {"center_x": 0.5}
+
+                    MDLabel:
+                        text: "Female"
+                        halign: "center"
+                        theme_text_color: "Secondary"
+
+
+        # Height & Weight Input Fields
+        MDTextField:
+            id: height
+            hint_text: "Enter Your Height (e.g. 5'10\")"
+            mode: "rectangle"
+            size_hint_x: 0.9
+            pos_hint: {"center_x": 0.5}
+
+        MDTextField:
+            id: weight
+            hint_text: "Enter Your Weight (in kgs)"
+            mode: "rectangle"
+            size_hint_x: 0.9
+            pos_hint: {"center_x": 0.5}
+
+        # Continue Button
+        MDRaisedButton:
+            text: "Continue"
+            size_hint_x: 0.8
+            pos_hint: {"center_x": 0.5}
+            md_bg_color: 0.6, 0.4, 1, 1
+            on_release: app.complete_user_info()

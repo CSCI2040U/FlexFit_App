@@ -1,0 +1,27 @@
+<SavedScreen>
+    name: 'saved'
+
+
+    MDBottomNavigation:
+        id: bottom_nav
+        height: "60dp"
+        panel_color: "#eeeeee"
+        pos_hint: {"bottom": 1}
+
+        MDBottomNavigationItem:
+            name: "home"
+            text: "Home"
+            icon: "home"
+            on_tab_press: app.switch_to_screen("home")
+
+        MDBottomNavigationItem:
+            name: "saved"
+            text: "Saved"
+            icon: "bookmark"
+            on_tab_press: app.switch_to_screen("saved")
+
+        MDBottomNavigationItem:
+            name: "user"
+            text: "User"
+            icon: "account"
+            on_tab_press: app.switch_to_screen("user")

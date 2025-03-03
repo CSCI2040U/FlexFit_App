@@ -395,19 +395,19 @@ ScreenManager:
                     name: "home"
                     text: "Home"
                     icon: "home"
-                    on_tab_press: app.switch_to_home()
+                    on_tab_press: app.switch_to_screen("home", nav_home)
 
                 MDBottomNavigationItem:
                     name: "saved"
                     text: "Saved"
                     icon: "bookmark"
-                    on_tab_press: app.switch_to_saved()
+                    on_tab_press: app.switch_to_screen("saved", nav_saved)
 
                 MDBottomNavigationItem:
                     name: "user"
                     text: "User"
                     icon: "account"
-                    on_tab_press: app.switch_to_user()
+                    on_tab_press: app.switch_to_screen("user", nav_user)
 
 
 

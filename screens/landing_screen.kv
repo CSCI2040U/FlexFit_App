@@ -1,0 +1,27 @@
+<LandingScreen>:
+    name: "landing"
+
+    MDBoxLayout:
+        orientation: "vertical"
+        md_bg_color: 1, 1, 1, 1
+        spacing: "20dp"
+        padding: "50dp"
+
+        Image:
+            source: "assets/logo.png"
+            size_hint: None, None
+            size: "150dp", "150dp"
+            pos_hint: {"center_x": 0.5}
+
+        MDLabel:
+            text: "FlexFit"
+            font_style: "H5"
+            theme_text_color: "Custom"
+            text_color: 0.6, 0.4, 1, 1
+            halign: "center"
+
+        MDRaisedButton:
+            text: "Get Started"
+            md_bg_color: 0.6, 0.4, 1, 1
+            pos_hint: {"center_x": 0.5}
+            on_release: app.switch_to_login()

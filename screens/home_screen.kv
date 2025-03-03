@@ -1,0 +1,95 @@
+<HomeScreen>:
+    name: "home"
+
+    MDScreen:
+
+        MDBoxLayout:
+            orientation: 'vertical'
+            size_hint_y: 1
+            MDTextField:
+                id: search_field
+                hint_text: "Search"
+                mode: "rectangle"
+                icon_right: "magnify"
+                size_hint_x: 0.9
+                size_hint_y: 1/5
+                pos_hint: {"center_x": 0.5}
+                height: "40dp"
+                md_bg_color: 0.95, 0.92, 1, 1
+                radius: [25,]
+
+            MDBoxLayout:
+                orientation: "vertical"
+                adaptive_height: True
+                padding: dp(10)
+                size_hint_y: 1
+
+                MDLabel:
+                    text: "Workouts"
+                    font_style: "H6"
+                    size_hint_y: None
+                    height: self.texture_size[1]
+
+                MDBoxLayout:
+                    orientation: 'vertical'
+                    size_hint_y: 1
+
+                    MDCard:
+                        radius: dp(10)
+                        md_bg_color: 0.9, 0.9, 1, 1
+                        BoxLayout:
+                            orientation: 'vertical'
+                            Image:
+                                source: 'logo.png'  # Replace with actual image path
+                                size_hint_y: 1/3
+                            MDLabel:
+                                text: "With Equipment"
+                                halign: "center"
+
+                    MDCard:
+                        radius: dp(10)
+                        md_bg_color: 0.9, 0.9, 1, 1
+                        BoxLayout:
+                            orientation: 'vertical'
+                            Image:
+                                source: 'assets/wellness_workout.jpg'  # Replace with actual image path
+                                size_hint_y: 1/3
+                            MDLabel:
+                                text: "Wellness"
+                                halign: "center"
+
+                    MDCard:
+                        radius: dp(10)
+                        md_bg_color: 0.9, 0.9, 1, 1
+                        BoxLayout:
+                            orientation: 'vertical'
+                            Image:
+                                source: 'assets/wellness_workout.jpg'  # Replace with actual image path
+                                size_hint_y: 1/3
+                            MDLabel:
+                                text: "Without Equipment"
+                                halign: "center"
+
+            MDBottomNavigation:
+                id: bottom_nav
+                height: "60dp"
+                panel_color: "#eeeeee"
+                pos_hint: {"bottom": 1}
+
+                MDBottomNavigationItem:
+                    name: "home"
+                    text: "Home"
+                    icon: "home"
+                    on_tab_press: app.switch_to_screen("home")
+
+                MDBottomNavigationItem:
+                    name: "saved"
+                    text: "Saved"
+                    icon: "bookmark"
+                    on_tab_press: app.switch_to_screen("saved")
+
+                MDBottomNavigationItem:
+                    name: "user"
+                    text: "User"
+                    icon: "account"
+                    on_tab_press: app.switch_to_screen("user")
