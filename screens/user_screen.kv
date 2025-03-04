@@ -4,12 +4,15 @@
         orientation: 'vertical'
         padding: dp(10)
         spacing: dp(10)
+        pos_hint: {"center_x": 0.5}
 
         # Profile Section
         MDBoxLayout:
             orientation: 'horizontal'
             size_hint_y: None
             height: dp(100)
+            spacing: dp(10)
+            pos_hint: {'center_x': 0.5}  # Centering entire profile section
 
             Image:
                 source: "logo.png"
@@ -21,68 +24,78 @@
 
             MDBoxLayout:
                 orientation: 'vertical'
-                spacing: dp(5)
+                size_hint_x: None
+                width: dp(280)
                 pos_hint: {'center_y': 0.5}
 
                 MDLabel:
                     text: "Hello User!"
                     bold: True
                     font_style: "H5"
+                    halign: "left"
+
+        # Height and Weight Section (Centered)
+        MDBoxLayout:
+            orientation: 'horizontal'
+            spacing: dp(20)
+            size_hint: None, None
+            width: dp(320)  # Adjusted width to center properly
+            height: dp(80)
+            pos_hint: {'center_x': 0.5}  # Ensures it's centered
+
+            # Height Card
+            MDCard:
+                size_hint: None, None
+                size: dp(140), dp(70)
+                elevation: 2
+                radius: [10]
+                padding: dp(5)
+                pos_hint: {"center_x": 0.5, "center_y": 0.5}
 
                 MDBoxLayout:
-                    orientation: 'horizontal'
+                    orientation: 'vertical'
+                    spacing: dp(5)
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
 
-                    MDCard:
-                        size_hint_x: None
-                        width: dp(150)
-                        elevation: 2
-                        radius: [10]
-                        padding: dp(5)
+                    MDLabel:
+                        text: "Height - 5'10\""
+                        halign: "center"
 
-                        MDBoxLayout:
-                            orientation: 'vertical'
-                            spacing: dp(5)
-                            MDLabel:
-                                text: "Height - 5'10\""
-                            MDRaisedButton:
-                                text: "Edit"
-                                size_hint_x: None
-                                width: dp(60)
-                                font_size: "12sp"
+                    MDIconButton:
+                        icon: "pencil"
+                        user_font_size: "18sp"
+                        pos_hint: {"center_x": 0.5}
 
-                    MDCard:
-                        size_hint_x: None
-                        width: dp(150)
-                        elevation: 2
-                        radius: [10]
-                        padding: dp(5)
+            # Weight Card
+            MDCard:
+                size_hint: None, None
+                size: dp(140), dp(70)
+                elevation: 2
+                radius: [10]
+                padding: dp(5)
+                pos_hint: {"center_x": 0.5, "center_y": 0.5}
 
-                        MDBoxLayout:
-                            orientation: 'vertical'
-                            spacing: dp(5)
-                            MDLabel:
-                                text: "Weight - 80kg"
-                            MDRaisedButton:
-                                text: "Edit"
-                                size_hint_x: None
-                                width: dp(60)
-                                font_size: "12sp"
+                MDBoxLayout:
+                    orientation: 'vertical'
+                    spacing: dp(5)
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
 
-        # Progress Indicators Section
+                    MDLabel:
+                        text: "Weight - 80kg"
+                        halign: "center"
+
+                    MDIconButton:
+                        icon: "pencil"
+                        user_font_size: "18sp"
+                        pos_hint: {"center_x": 0.5}
+
+        # Progress Section (Restored to Original Layout)
         MDBoxLayout:
             orientation: 'vertical'
             padding: dp(10)
             spacing: dp(10)
-
-            Widget:
-                size_hint_y: None
-                height: dp(140)
-                canvas.before:
-                    Color:
-                        rgba: 0.5, 0.2, 0.8, 1
-                    Line:
-                        width: 3
-                        circle: (self.center_x, self.center_y, 60, 0, 180)
+            size_hint_x: 0.9
+            pos_hint: {'center_x': 0.5}
 
             MDLabel:
                 text: "1600/2000"
@@ -91,14 +104,15 @@
 
             MDRaisedButton:
                 text: "Calories Goal"
-                size_hint_x: None
-                width: dp(140)
+                size_hint: None, None
+                size: dp(140), dp(40)
                 pos_hint: {"center_x": 0.5}
 
             MDProgressBar:
                 value: 80
-                pos_hint: {"center_x": 0.5}
                 size_hint_x: 0.9
+                height: dp(8)
+                pos_hint: {"center_x": 0.5}
 
             MDLabel:
                 text: "240/300 mins."
@@ -107,16 +121,18 @@
 
             MDRaisedButton:
                 text: "Weekly Time Spent"
-                size_hint_x: None
-                width: dp(180)
+                size_hint: None, None
+                size: dp(180), dp(40)
                 pos_hint: {"center_x": 0.5}
 
         MDLabel:
             text: "Making good progress!"
             halign: "center"
             font_style: "H5"
+            size_hint_y: None
+            height: dp(40)
 
-
+        # Bottom Navigation (Restored to Original Layout)
         MDBottomNavigation:
             id: bottom_nav
             height: "60dp"

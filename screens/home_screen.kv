@@ -8,11 +8,10 @@
             size_hint_y: 1
             MDTextField:
                 id: search_field
-                hint_text: "Search"
                 mode: "rectangle"
-                icon_right: "magnify"
+                icon_left: "magnify"
                 size_hint_x: 0.9
-                size_hint_y: 1/5
+                size_hint_y: 1/4
                 pos_hint: {"center_x": 0.5}
                 height: "40dp"
                 md_bg_color: 0.95, 0.92, 1, 1
@@ -22,7 +21,8 @@
                 orientation: "vertical"
                 adaptive_height: True
                 padding: dp(10)
-                size_hint_y: 1
+                size_hint_y: 2
+                spacing: dp(50)
 
                 MDLabel:
                     text: "Workouts"
@@ -31,17 +31,19 @@
                     height: self.texture_size[1]
 
                 MDBoxLayout:
-                    orientation: 'vertical'
+                    orientation: 'horizontal'
                     size_hint_y: 1
+                    spacing: dp(25)
 
                     MDCard:
                         radius: dp(10)
                         md_bg_color: 0.9, 0.9, 1, 1
+                        size_hint_x: 1/2
                         BoxLayout:
                             orientation: 'vertical'
                             Image:
-                                source: 'logo.png'  # Replace with actual image path
-                                size_hint_y: 1/3
+                                source: 'assets/indoor_workout.jpg'  # Replace with actual image path
+                                size_hint_y: 1
                             MDLabel:
                                 text: "With Equipment"
                                 halign: "center"
@@ -49,13 +51,32 @@
                     MDCard:
                         radius: dp(10)
                         md_bg_color: 0.9, 0.9, 1, 1
+                        size_hint_x: 1/2
                         BoxLayout:
                             orientation: 'vertical'
                             Image:
-                                source: 'assets/wellness_workout.jpg'  # Replace with actual image path
-                                size_hint_y: 1/3
+                                source: 'assets/indoor_workout.jpg'  # Replace with actual image path
+                                size_hint_y: 1
                             MDLabel:
-                                text: "Wellness"
+                                text: "Without Equipment"
+                                halign: "center"
+
+                MDBoxLayout:
+                    orientation: 'horizontal'
+                    size_hint_y: 1
+                    spacing: dp(25)
+
+                    MDCard:
+                        radius: dp(10)
+                        md_bg_color: 0.9, 0.9, 1, 1
+                        padding: dp(10)
+                        BoxLayout:
+                            orientation: 'vertical'
+                            Image:
+                                source: 'assets/outdoor_workout.jpg'  # Replace with actual image path
+                                size_hint_y: 1
+                            MDLabel:
+                                text: "Outdoor"
                                 halign: "center"
 
                     MDCard:
@@ -65,9 +86,9 @@
                             orientation: 'vertical'
                             Image:
                                 source: 'assets/wellness_workout.jpg'  # Replace with actual image path
-                                size_hint_y: 1/3
+                                size_hint_y: 1
                             MDLabel:
-                                text: "Without Equipment"
+                                text: "Wellness"
                                 halign: "center"
 
             MDBottomNavigation:
