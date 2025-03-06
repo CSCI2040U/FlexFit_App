@@ -1,0 +1,118 @@
+ScreenManager:
+    HomeScreen:
+    WithEquipmentScreen:
+    WithoutEquipmentScreen:
+    OutdoorScreen:
+    WellnessScreen:
+
+<HomeScreen>:
+    name: "home"
+
+    MDScreen:
+        MDBoxLayout:
+            orientation: 'vertical'
+            size_hint_y: 1
+
+            MDTextField:
+                id: search_field
+                mode: "rectangle"
+                icon_left: "magnify"
+                size_hint_x: 0.9
+                size_hint_y: 1/4
+                pos_hint: {"center_x": 0.5}
+                height: "40dp"
+                md_bg_color: 0.95, 0.92, 1, 1
+                radius: [25,]
+
+            MDBoxLayout:
+                orientation: "vertical"
+                adaptive_height: True
+                padding: dp(10)
+                size_hint_y: 2
+                spacing: dp(50)
+
+                MDLabel:
+                    text: "Workouts"
+                    font_style: "H6"
+                    size_hint_y: None
+                    height: self.texture_size[1]
+
+                # First Row (Clickable MDCard)
+                MDBoxLayout:
+                    orientation: 'horizontal'
+                    size_hint_y: 1
+                    spacing: dp(25)
+
+                    ClickableCard:
+                        target_screen: "with_equipment"
+                        md_bg_color: 0.9, 0.9, 1, 1
+                        radius: dp(10)
+                        size_hint_x: 1/2
+                        elevation: 5
+                        BoxLayout:
+                            orientation: 'vertical'
+                            Image:
+                                source: 'assets/indoor_workout.jpg'
+                                size_hint_y: 1
+                            MDLabel:
+                                text: "With Equipment"
+                                halign: "center"
+
+                    ClickableCard:
+                        target_screen: "without_equipment"
+                        md_bg_color: 0.9, 0.9, 1, 1
+                        radius: dp(10)
+                        size_hint_x: 1/2
+                        elevation: 5
+                        BoxLayout:
+                            orientation: 'vertical'
+                            Image:
+                                source: 'assets/indoor_workout.jpg'
+                                size_hint_y: 1
+                            MDLabel:
+                                text: "Without Equipment"
+                                halign: "center"
+
+<WithEquipmentScreen>:
+    name: "with_equipment"
+    MDScreen:
+        MDBoxLayout:
+            orientation: 'vertical'
+            MDLabel:
+                text: "With Equipment Workouts"
+            Button:
+                text: "Back"
+                on_release: app.root.current = "home"
+
+<WithoutEquipmentScreen>:
+    name: "without_equipment"
+    MDScreen:
+        MDBoxLayout:
+            orientation: 'vertical'
+            MDLabel:
+                text: "Without Equipment Workouts"
+            Button:
+                text: "Back"
+                on_release: app.root.current = "home"
+
+<OutdoorScreen>:
+    name: "outdoor"
+    MDScreen:
+        MDBoxLayout:
+            orientation: 'vertical'
+            MDLabel:
+                text: "Outdoor Workouts"
+            Button:
+                text: "Back"
+                on_release: app.root.current = "home"
+
+<WellnessScreen>:
+    name: "wellness"
+    MDScreen:
+        MDBoxLayout:
+            orientation: 'vertical'
+            MDLabel:
+                text: "Wellness Workouts"
+            Button:
+                text: "Back"
+                on_release: app.root.current = "home"

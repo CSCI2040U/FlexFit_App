@@ -3,12 +3,12 @@
     MDBoxLayout:
         orientation: 'vertical'
         padding: dp(10)
-        spacing: dp(10)
+        spacing: dp(50)
         pos_hint: {"center_x": 0.5}
 
         # Profile Section
         MDBoxLayout:
-            orientation: 'horizontal'
+            orientation: 'vertical'
             size_hint_y: None
             height: dp(100)
             spacing: dp(10)
@@ -21,23 +21,25 @@
                 allow_stretch: True
                 keep_ratio: True
                 pos_hint: {'center_y': 0.5}
+                pos_hint: {'center_x': 0.5}
 
             MDBoxLayout:
                 orientation: 'vertical'
-                size_hint_x: None
-                width: dp(280)
+                size_hint_x: 1
                 pos_hint: {'center_y': 0.5}
+                pos_hint: {'center_x': 0.5}
+                spacing: dp(20)
 
                 MDLabel:
                     text: "Hello User!"
                     bold: True
                     font_style: "H5"
-                    halign: "left"
+                    halign: "center"
 
         # Height and Weight Section (Centered)
         MDBoxLayout:
             orientation: 'horizontal'
-            spacing: dp(20)
+            spacing: dp(40)
             size_hint: None, None
             width: dp(320)  # Adjusted width to center properly
             height: dp(80)
@@ -53,7 +55,7 @@
                 pos_hint: {"center_x": 0.5, "center_y": 0.5}
 
                 MDBoxLayout:
-                    orientation: 'vertical'
+                    orientation: 'horizontal'
                     spacing: dp(5)
                     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
 
@@ -76,7 +78,7 @@
                 pos_hint: {"center_x": 0.5, "center_y": 0.5}
 
                 MDBoxLayout:
-                    orientation: 'vertical'
+                    orientation: 'horizontal'
                     spacing: dp(5)
                     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
 
