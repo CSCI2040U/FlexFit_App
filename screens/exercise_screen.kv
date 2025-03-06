@@ -1,0 +1,27 @@
+<ExerciseScreen>:
+    name: root.exercise_name
+
+    BoxLayout:
+        orientation: 'vertical'
+        padding: dp(10)
+        spacing: dp(10)
+
+        Image:
+            source: root.exercise_image
+            size_hint_y: 0.5
+            allow_stretch: True
+
+        MDLabel:
+            text: root.exercise_name
+            font_style: "H5"
+            halign: "center"
+
+        MDLabel:
+            text: root.exercise_description  # ✅ Fixed this line
+            font_style: "Body1"
+            halign: "center"
+
+        MDRaisedButton:
+            text: "Back"
+            pos_hint: {"center_x": 0.5}
+            on_release: app.switch_to_screen("home")

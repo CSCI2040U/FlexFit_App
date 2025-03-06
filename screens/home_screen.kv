@@ -2,100 +2,93 @@
     name: "home"
 
     MDScreen:
-
         MDBoxLayout:
             orientation: 'vertical'
             size_hint_y: 1
-            MDTextField:
-                id: search_field
-                mode: "rectangle"
-                icon_left: "magnify"
-                size_hint_x: 0.9
-                size_hint_y: 1/4
-                pos_hint: {"center_x": 0.5}
-                height: "40dp"
-                md_bg_color: 0.95, 0.92, 1, 1
-                radius: [25,]
+            padding: dp(20)
 
-            MDBoxLayout:
-                orientation: "vertical"
-                adaptive_height: True
-                padding: dp(10)
-                size_hint_y: 2
-                spacing: dp(50)
+            MDLabel:
+                text: "Workouts"
+                font_style: "H5"
+                halign: "center"
+                size_hint_y: None
+                height: dp(40)
 
-                MDLabel:
-                    text: "Workouts"
-                    font_style: "H6"
-                    size_hint_y: None
-                    height: self.texture_size[1]
+            GridLayout:
+                cols: 2
+                spacing: dp(15)
+                size_hint_y: None
+                height: dp(400)
+                size_hint_x: 1
 
-                MDBoxLayout:
-                    orientation: 'horizontal'
-                    size_hint_y: 1
-                    spacing: dp(25)
+                ClickableCard:
+                    target_screen: "with_equipment"
+                    radius: dp(10)
+                    md_bg_color: 0.9, 0.9, 1, 1
+                    size_hint_x: 1/2
+                    elevation: 1/2
+                    BoxLayout:
+                        orientation: 'vertical'
+                        Image:
+                            source: "assets/indoor_workout.jpg"
+                            size_hint_y: 1
+                        MDLabel:
+                            text: "With Equipment"
+                            halign: "center"
+                            size_hint_y: 1/4
 
-                    MDCard:
-                        radius: dp(10)
-                        md_bg_color: 0.9, 0.9, 1, 1
-                        size_hint_x: 1/2
-                        BoxLayout:
-                            orientation: 'vertical'
-                            Image:
-                                source: 'assets/indoor_workout.jpg'  # Replace with actual image path
-                                size_hint_y: 1
-                            MDLabel:
-                                text: "With Equipment"
-                                halign: "center"
+                ClickableCard:
+                    target_screen: "without_equipment"
+                    radius: dp(10)
+                    md_bg_color: 0.9, 0.9, 1, 1
+                    size_hint_x: 1/2
+                    elevation: 1/2
+                    BoxLayout:
+                        orientation: 'vertical'
+                        Image:
+                            source: "assets/indoor_workout.jpg"
+                            size_hint_y: 1
+                        MDLabel:
+                            text: "Without Equipment"
+                            halign: "center"
+                            size_hint_y: 1/4
 
-                    MDCard:
-                        radius: dp(10)
-                        md_bg_color: 0.9, 0.9, 1, 1
-                        size_hint_x: 1/2
-                        BoxLayout:
-                            orientation: 'vertical'
-                            Image:
-                                source: 'assets/indoor_workout.jpg'  # Replace with actual image path
-                                size_hint_y: 1
-                            MDLabel:
-                                text: "Without Equipment"
-                                halign: "center"
+                ClickableCard:
+                    target_screen: "outdoor"
+                    radius: dp(10)
+                    md_bg_color: 0.9, 0.9, 1, 1
+                    size_hint_x: 1/2
+                    elevation: 1/2
+                    BoxLayout:
+                        orientation: 'vertical'
+                        Image:
+                            source: "assets/outdoor_workout.jpg"
+                            size_hint_y: 1
+                        MDLabel:
+                            text: "Outdoor"
+                            halign: "center"
+                            size_hint_y: 1/4
 
-                MDBoxLayout:
-                    orientation: 'horizontal'
-                    size_hint_y: 1
-                    spacing: dp(25)
-
-                    MDCard:
-                        radius: dp(10)
-                        md_bg_color: 0.9, 0.9, 1, 1
-                        padding: dp(10)
-                        BoxLayout:
-                            orientation: 'vertical'
-                            Image:
-                                source: 'assets/outdoor_workout.jpg'  # Replace with actual image path
-                                size_hint_y: 1
-                            MDLabel:
-                                text: "Outdoor"
-                                halign: "center"
-
-                    MDCard:
-                        radius: dp(10)
-                        md_bg_color: 0.9, 0.9, 1, 1
-                        BoxLayout:
-                            orientation: 'vertical'
-                            Image:
-                                source: 'assets/wellness_workout.jpg'  # Replace with actual image path
-                                size_hint_y: 1
-                            MDLabel:
-                                text: "Wellness"
-                                halign: "center"
+                ClickableCard:
+                    target_screen: "wellness"
+                    radius: dp(10)
+                    md_bg_color: 0.9, 0.9, 1, 1
+                    size_hint_x: 1/2
+                    elevation: 1/2
+                    BoxLayout:
+                        orientation: 'vertical'
+                        Image:
+                            source: "assets/wellness_workout.jpg"
+                            size_hint_y: 1
+                        MDLabel:
+                            text: "Wellness"
+                            halign: "center"
+                            size_hint_y: 1/4
 
             MDBottomNavigation:
                 id: bottom_nav
-                height: "60dp"
                 panel_color: "#eeeeee"
-                pos_hint: {"bottom": 1}
+                pos_hint: {"bottom": 2}
 
                 MDBottomNavigationItem:
                     name: "home"

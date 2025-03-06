@@ -2,7 +2,123 @@
     name: "with_equipment"
 
     MDScreen:
-        MDLabel:
-            text: "With Equipment Workouts"
-            halign: "center"
-            font_style: "H4"
+        MDBoxLayout:
+            orientation: 'vertical'
+            size_hint_y: 1
+            padding: dp(20)
+            MDBoxLayout:
+                orientation: 'vertical'
+                size_hint_y: 1
+                MDTextField:
+                    id: search_field
+                    mode: "rectangle"
+                    icon_left: "magnify"
+                    size_hint_x: 0.9
+                    size_hint_y: 1/4
+                    pos_hint: {"center_x": 0.5}
+                    height: "40dp"
+                    md_bg_color: 0.95, 0.92, 1, 1
+                    radius: [25,]
+
+            MDLabel:
+                text: "Workouts"
+                font_style: "H5"
+                halign: "center"
+                size_hint_y: None
+                height: dp(40)
+
+            GridLayout:
+                cols: 2
+                spacing: dp(15)
+                size_hint_y: None
+                height: dp(400)
+                size_hint_x: 1
+
+                ClickableCard:
+                    target_screen: "with_equipment"
+                    radius: dp(10)
+                    md_bg_color: 0.9, 0.9, 1, 1
+                    size_hint_x: 1/2
+                    elevation: 1/2
+                    BoxLayout:
+                        orientation: 'vertical'
+                        Image:
+                            source: "assets/indoor_workout.jpg"
+                            size_hint_y: 1
+                        MDLabel:
+                            text: "With Equipment"
+                            halign: "center"
+                            size_hint_y: 1/4
+
+                ClickableCard:
+                    target_screen: "without_equipment"
+                    radius: dp(10)
+                    md_bg_color: 0.9, 0.9, 1, 1
+                    size_hint_x: 1/2
+                    elevation: 1/2
+                    BoxLayout:
+                        orientation: 'vertical'
+                        Image:
+                            source: "assets/indoor_workout.jpg"
+                            size_hint_y: 1
+                        MDLabel:
+                            text: "Without Equipment"
+                            halign: "center"
+                            size_hint_y: 1/4
+
+                ClickableCard:
+                    target_screen: "outdoor"
+                    radius: dp(10)
+                    md_bg_color: 0.9, 0.9, 1, 1
+                    size_hint_x: 1/2
+                    elevation: 1/2
+                    BoxLayout:
+                        orientation: 'vertical'
+                        Image:
+                            source: "assets/outdoor_workout.jpg"
+                            size_hint_y: 1
+                        MDLabel:
+                            text: "Outdoor"
+                            halign: "center"
+                            size_hint_y: 1/4
+
+                ClickableCard:
+                    target_screen: "wellness"
+                    radius: dp(10)
+                    md_bg_color: 0.9, 0.9, 1, 1
+                    size_hint_x: 1/2
+                    elevation: 1/2
+                    BoxLayout:
+                        orientation: 'vertical'
+                        Image:
+                            source: "assets/wellness_workout.jpg"
+                            size_hint_y: 1
+                        MDLabel:
+                            text: "Wellness"
+                            halign: "center"
+                            size_hint_y: 1/4
+
+            MDBottomNavigation:
+                id: bottom_nav
+                panel_color: "#eeeeee"
+                pos_hint: {"bottom": 1}
+                radius: dp (10)
+                height: "10dp"
+
+                MDBottomNavigationItem:
+                    name: "home"
+                    text: "Home"
+                    icon: "home"
+                    on_tab_press: app.switch_to_screen("home")
+
+                MDBottomNavigationItem:
+                    name: "saved"
+                    text: "Saved"
+                    icon: "bookmark"
+                    on_tab_press: app.switch_to_screen("saved")
+
+                MDBottomNavigationItem:
+                    name: "user"
+                    text: "User"
+                    icon: "account"
+                    on_tab_press: app.switch_to_screen("user")

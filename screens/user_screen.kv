@@ -15,7 +15,7 @@
             pos_hint: {'center_x': 0.5}  # Centering entire profile section
 
             Image:
-                source: "logo.png"
+                source: "assets/logo.png"
                 size_hint: None, None
                 size: dp(80), dp(80)
                 allow_stretch: True
@@ -137,9 +137,8 @@
         # Bottom Navigation (Restored to Original Layout)
         MDBottomNavigation:
             id: bottom_nav
-            height: "60dp"
             panel_color: "#eeeeee"
-            pos_hint: {"bottom": 1}
+            pos_hint: {"bottom": 2}
 
             MDBottomNavigationItem:
                 name: "home"
