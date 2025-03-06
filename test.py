@@ -1,12 +1,53 @@
+import os
+import requests
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivymd.app import MDApp
+from kivy.clock import Clock
 from kivymd.uix.bottomnavigation import MDBottomNavigationItem
 from kivymd.uix.pickers import MDDatePicker
 from kivymd.uix.textfield import MDTextField
-import os
+from kivy.uix.behaviors import ButtonBehavior
+from kivymd.uix.card import MDCard
+from kivy.properties import StringProperty
+from kivy.factory import Factory
 
-# 🔹 Define the Custom Password Field Before Loading KV Files
+# ✅ Set Kivy to use ANGLE for OpenGL stability
+os.environ["KIVY_GL_BACKEND"] = "angle_sdl2"
+
+# ✅ Exercise API Class
+class ExerciseAPI:
+    BASE_URL = "https://exercisedb.p.rapidapi.com/exercises"
+    HEADERS = {
+        "X-RapidAPI-Key": "22a8c20e56msh9797b7aeae03bdfp1b629cjsna83e21797dde",
+        "X-RapidAPI-Host": "exercisedb.p.rapidapi.com"
+    }
+
+    @classmethod
+    def fetch_exercises(cls):
+        """Fetch exercise data from RapidAPI."""
+        try:
+            response = requests.get(cls.BASE_URL, headers=cls.HEADERS)
+            if response.status_code == 200:
+                return response.json()  # ✅ Returns a list of exercises
+            else:
+                print(f"❌ API ERROR: {response.status_code}, {response.text}")
+                return []
+        except Exception as e:
+            print(f"🚨 API Request Failed: {e}")
+            return []
+
+# ✅ Clickable MDCard Class
+class ClickableCard(MDCard, ButtonBehavior):
+    target_screen = StringProperty("")
+
+    def on_release(self):
+        """Navigate to the target screen when clicked."""
+        if self.target_screen:
+            print(f'🔄 Navigating to {self.target_screen}')
+            app = MDApp.get_running_app()
+            app.root.current = self.target_screen
+
 class PasswordTextField(MDTextField):
     def on_touch_down(self, touch):
         """Detects click on the eye icon and toggles password visibility"""
@@ -19,7 +60,17 @@ class PasswordTextField(MDTextField):
                 self.password = True  # Hide password
         return super().on_touch_down(touch)
 
-# 🔹 Screens (Ensure they are registered before KV Files load)
+# ✅ Generic Exercise Screen Template
+class ExerciseScreen(Screen):
+    exercise_name = StringProperty("")
+    exercise_image = StringProperty("")
+    exercise_description = StringProperty("")
+
+    def on_enter(self):
+        """Runs when the screen is opened and fetches data dynamically."""
+        print(f"📥 Loading exercise: {self.exercise_name}")
+
+# ✅ Define Screens
 class LandingScreen(Screen):
     pass
 
@@ -41,7 +92,34 @@ class SavedScreen(Screen):
 class UserScreen(Screen):
     pass
 
-# 🔹 Load all KV Files Dynamically
+class WithEquipmentScreen(Screen):
+    pass
+
+class WithoutEquipmentScreen(Screen):
+    pass
+
+class OutdoorScreen(Screen):
+    pass
+
+class WellnessScreen(Screen):
+    pass
+
+# ✅ Register Screens in Factory
+Factory.register("ClickableCard", cls=ClickableCard)
+Factory.register("ExerciseScreen", cls=ExerciseScreen)
+Factory.register("HomeScreen", cls=HomeScreen)
+Factory.register("LandingScreen", cls=LandingScreen)
+Factory.register("SignUpScreen", cls=SignUpScreen)
+Factory.register("LoginScreen", cls=LoginScreen)
+Factory.register("UserInfoScreen", cls=UserInfoScreen)
+Factory.register("SavedScreen", cls=SavedScreen)
+Factory.register("UserScreen", cls=UserScreen)
+Factory.register("WithEquipmentScreen", cls=WithEquipmentScreen)
+Factory.register("WithoutEquipmentScreen", cls=WithoutEquipmentScreen)
+Factory.register("OutdoorScreen", cls=OutdoorScreen)
+Factory.register("WellnessScreen", cls=WellnessScreen)
+
+# ✅ Load all KV Files Dynamically
 KV_DIR = "screens"
 for file in os.listdir(KV_DIR):
     if file.endswith(".kv"):
@@ -49,7 +127,7 @@ for file in os.listdir(KV_DIR):
         print(f"✅ Loaded KV File: {kv_path}")
         Builder.load_file(kv_path)
 
-# 🔹 Main App
+# ✅ Main App Class
 class MainApp(MDApp):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -64,51 +142,54 @@ class MainApp(MDApp):
         self.sm.add_widget(HomeScreen(name="home"))
         self.sm.add_widget(SavedScreen(name="saved"))
         self.sm.add_widget(UserScreen(name="user"))
+        self.sm.add_widget(WithEquipmentScreen(name="with_equipment"))
+        self.sm.add_widget(WithoutEquipmentScreen(name="without_equipment"))
+        self.sm.add_widget(OutdoorScreen(name="outdoor"))
+        self.sm.add_widget(WellnessScreen(name="wellness"))
+
+        # ✅ Fetch API Data and Dynamically Create Exercise Screens
+        exercise_data = ExerciseAPI.fetch_exercises()
+        for exercise in exercise_data[:10]:  # Limit to 10 exercises for now
+            screen = ExerciseScreen(name=str(exercise["id"]))
+            screen.exercise_name = exercise["name"]
+            screen.exercise_image = exercise["gifUrl"]  # Ensure this is a valid URL
+            screen.exercise_description = f"Target: {exercise['target']} | Equipment: {exercise['equipment']}"
+            self.sm.add_widget(screen)
+
         return self.sm
 
+    # ✅ Navigation Functions
+    def switch_to_screen(self, screen_name):
+        """Safely switch screens and update bottom navigation highlight."""
+        if screen_name in self.sm.screen_names:
+            self.sm.current = screen_name
+        else:
+            print(f"🚨 ERROR: Screen '{screen_name}' not found!")
+
     def switch_to_login(self):
-        self.root.current = "login"
+        self.switch_to_screen("login")
 
     def switch_to_signup(self):
-        self.root.current = "signup"
+        self.switch_to_screen("signup")
 
     def switch_to_user_info(self):
-        """After Sign-Up, go to user details screen."""
-        self.root.current = "user_info"
+        self.switch_to_screen("user_info")
 
     def switch_to_home(self):
-        """Navigate to Home Screen."""
-        self.root.current = "home"
-        print("Home Clicked!")
+        self.switch_to_screen("home")
 
     def switch_to_saved(self):
-        """Navigate to Saved Screen (Placeholder)."""
-        self.root.current = "saved"
-        print("Saved Workouts Clicked!")
+        self.switch_to_screen("saved")
 
     def switch_to_user(self):
-        """Navigate to User Profile (Placeholder)."""
-        self.root.current = "user"
-        print("User Profile Clicked!")
-
-    def switch_to_screen(self, screen_name):
-        """Switch screen and update navigation bar highlighting."""
-        self.root.current = screen_name
-
-        # Update selected icon state
-        for screen in ["home", "saved", "user"]:
-            nav_item = self.root.get_screen(screen).ids.bottom_nav
-            for item in nav_item.children:
-                if isinstance(item, MDBottomNavigationItem):
-                    item.selected = item.name == screen_name  # ✅ Set selected item
-
+        self.switch_to_screen("user")
 
     def open_category(self, category):
-        """Handles category click events."""
-        print("Opening {} Workouts!".format(category))  # Fixes f-string issue
+        print(f"Opening {category} Workouts!")
+        self.switch_to_screen(category)
 
     def google_sign_in(self):
-        """Show a popup to simulate Google Sign-In."""
+    # """Show a popup to simulate Google Sign-In."""
         from kivymd.uix.dialog import MDDialog
         try:
             dialog = MDDialog(
@@ -157,22 +238,21 @@ class MainApp(MDApp):
         """Store selected gender and update UI colors."""
         self.user_info["gender"] = gender
 
+        # Debugging: Check if gender is set correctly
+        print(f"Gender Selected: {self.user_info['gender']}")
+
         user_info_screen = self.root.get_screen("user_info")
         user_info_screen.ids.male_card.md_bg_color = self.get_gender_color("male")
         user_info_screen.ids.female_card.md_bg_color = self.get_gender_color("female")
 
-        print(f"Gender Selected: {gender}")
-
     def get_gender_color(self, gender):
         """Returns the color for the selected gender card."""
-        if self.user_info["gender"] == gender:
-            return (0.6, 0.4, 1, 1)
-        return (0.95, 0.92, 1, 1)
-
-    def open_category(self, category):
-        """Handles category click events."""
-        print("Opening {} Workouts!".format(category))  # Fixes f-string issue
-
+        if self.user_info.get("gender") == gender:
+            return 0.6, 0.4, 1, 1  # Selected color (Purple)
+        return 0.95, 0.92, 1, 1  # Default color (Light Purple)
 
 if __name__ == "__main__":
-    MainApp().run()
+    try:
+        MainApp().run()
+    except Exception as e:
+        print(f"🚨 ERROR: {e}")
