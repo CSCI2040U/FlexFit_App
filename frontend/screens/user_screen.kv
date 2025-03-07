@@ -1,159 +1,137 @@
-<UserScreen>
+<UserScreen>:
     name: 'user'
     MDBoxLayout:
         orientation: 'vertical'
-        padding: dp(10)
-        spacing: dp(50)
+        padding: dp(20)
+        spacing: dp(40)
         pos_hint: {"center_x": 0.5}
 
         # Profile Section
         MDBoxLayout:
             orientation: 'vertical'
             size_hint_y: None
-            height: dp(100)
-            spacing: dp(10)
-            pos_hint: {'center_x': 0.5}  # Centering entire profile section
+            height: dp(180)
+            spacing: dp(20)
+            pos_hint: {'center_x': 0.5}
 
             AsyncImage:
                 source: "assets/logo.png"
                 size_hint: None, None
-                size: dp(80), dp(80)
+                size: dp(120), dp(120)
                 allow_stretch: True
                 keep_ratio: True
                 pos_hint: {'center_y': 0.5}
                 pos_hint: {'center_x': 0.5}
 
-            MDBoxLayout:
-                orientation: 'vertical'
-                size_hint_x: 1
-                pos_hint: {'center_y': 0.5}
-                pos_hint: {'center_x': 0.5}
-                spacing: dp(20)
-
-                MDLabel:
-                    text: "Hello User!"
-                    bold: True
-                    font_style: "H5"
-                    halign: "center"
+            MDLabel:
+                text: "Hello User!"
+                bold: True
+                font_style: "H5"
+                halign: "center"
+                theme_text_color: "Primary"
 
         # Height and Weight Section (Centered)
         MDBoxLayout:
             orientation: 'horizontal'
-            spacing: dp(40)
+            spacing: dp(30)
             size_hint: None, None
-            width: dp(320)  # Adjusted width to center properly
-            height: dp(80)
-            pos_hint: {'center_x': 0.5}  # Ensures it's centered
+            width: dp(380)
+            height: dp(120)  # Increased height to prevent overlap
+            pos_hint: {'center_x': 0.5}
 
             # Height Card
             MDCard:
                 size_hint: None, None
-                size: dp(140), dp(70)
-                elevation: 2
-                radius: [10]
-                padding: dp(5)
+                size: dp(160), dp(160)
+                elevation: 1/2
+                radius: [15]
+                padding: dp(10)
                 pos_hint: {"center_x": 0.5, "center_y": 0.5}
 
                 MDBoxLayout:
-                    orientation: 'horizontal'
+                    orientation: 'vertical'
                     spacing: dp(5)
                     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
 
                     MDLabel:
-                        text: "Height - 5'10\""
+                        text: "Height"
                         halign: "center"
+                        font_style: "Subtitle2"
+                        theme_text_color: "Secondary"
+
+                    MDLabel:
+                        text: str(root.height)  # Display height
+                        halign: "center"
+                        pos_hint_y: 1/2
+                        font_style: "H5"
+                        theme_text_color: "Primary"
 
                     MDIconButton:
                         icon: "pencil"
-                        user_font_size: "18sp"
+                        user_font_size: "20sp"
                         pos_hint: {"center_x": 0.5}
+                        theme_text_color: "Secondary"
 
             # Weight Card
             MDCard:
                 size_hint: None, None
-                size: dp(140), dp(70)
-                elevation: 2
-                radius: [10]
-                padding: dp(5)
+                size: dp(160), dp(160)
+                elevation: 1/2
+                radius: [15]
+                padding: dp(10)
                 pos_hint: {"center_x": 0.5, "center_y": 0.5}
 
                 MDBoxLayout:
-                    orientation: 'horizontal'
+                    orientation: 'vertical'
                     spacing: dp(5)
                     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
 
                     MDLabel:
-                        text: "Weight - 80kg"
+                        text: "Weight"
                         halign: "center"
+                        font_style: "Subtitle2"
+                        theme_text_color: "Secondary"
+
+                    MDLabel:
+                        text: str(root.weight)  # Display weight
+                        halign: "center"
+                        font_style: "H5"
+                        theme_text_color: "Primary"
 
                     MDIconButton:
                         icon: "pencil"
-                        user_font_size: "18sp"
+                        user_font_size: "20sp"
                         pos_hint: {"center_x": 0.5}
+                        theme_text_color: "Secondary"
 
-        # Progress Section (Restored to Original Layout)
-        MDBoxLayout:
-            orientation: 'vertical'
-            padding: dp(10)
-            spacing: dp(10)
-            size_hint_x: 0.9
-            pos_hint: {'center_x': 0.5}
-
-            MDLabel:
-                text: "1600/2000"
-                halign: "center"
-                font_style: "H6"
-
-            MDRaisedButton:
-                text: "Calories Goal"
-                size_hint: None, None
-                size: dp(140), dp(40)
-                pos_hint: {"center_x": 0.5}
-
-            MDProgressBar:
-                value: 80
-                size_hint_x: 0.9
-                height: dp(8)
-                pos_hint: {"center_x": 0.5}
-
-            MDLabel:
-                text: "240/300 mins."
-                halign: "center"
-                font_style: "H6"
-
-            MDRaisedButton:
-                text: "Weekly Time Spent"
-                size_hint: None, None
-                size: dp(180), dp(40)
-                pos_hint: {"center_x": 0.5}
-
-        MDLabel:
-            text: "Making good progress!"
-            halign: "center"
-            font_style: "H5"
-            size_hint_y: None
-            height: dp(40)
-
-        # Bottom Navigation (Restored to Original Layout)
+        # Bottom Navigation Section
         MDBottomNavigation:
             id: bottom_nav
             panel_color: "#eeeeee"
-            pos_hint: {"bottom": 2}
+            pos_hint: {"bottom": 1}
+            size_hint_y: 1/4
+            radius: dp(10)
 
             MDBottomNavigationItem:
                 name: "home"
                 text: "Home"
                 icon: "home"
                 on_tab_press: app.switch_to_screen("home")
+                icon_color_normal: 0.3, 0.3, 0.3, 1
+                icon_color_active: 0.9, 0.6, 0.2, 1
 
             MDBottomNavigationItem:
                 name: "saved"
                 text: "Saved"
                 icon: "bookmark"
                 on_tab_press: app.switch_to_screen("saved")
+                icon_color_normal: 0.3, 0.3, 0.3, 1
+                icon_color_active: 0.9, 0.6, 0.2, 1
 
             MDBottomNavigationItem:
                 name: "user"
                 text: "User"
                 icon: "account"
                 on_tab_press: app.switch_to_screen("user")
+                icon_color_normal: 0.3, 0.3, 0.3, 1
+                icon_color_active: 0.9, 0.6, 0.2, 1
