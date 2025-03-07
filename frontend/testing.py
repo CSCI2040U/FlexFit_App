@@ -1,41 +1,105 @@
 import os
 import requests
+from kivy.factory import Factory
 from kivy.lang import Builder
+from kivy.properties import StringProperty
+from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivymd.app import MDApp
-from kivy.clock import Clock
-from kivymd.uix.bottomnavigation import MDBottomNavigationItem
+from kivymd.uix.card import MDCard
+from kivymd.uix.list import OneLineListItem, OneLineAvatarListItem, ImageLeftWidget, OneLineAvatarIconListItem, IconRightWidget
 from kivymd.uix.pickers import MDDatePicker
 from kivymd.uix.textfield import MDTextField
-from kivy.uix.behaviors import ButtonBehavior
-from kivymd.uix.card import MDCard
-from kivy.properties import StringProperty
-from kivy.factory import Factory
 
 # ✅ Set Kivy to use ANGLE for OpenGL stability
 os.environ["KIVY_GL_BACKEND"] = "angle_sdl2"
 
-# ✅ Exercise API Class
+# ✅ API Connection (Using Local FastAPI)
 class ExerciseAPI:
-    BASE_URL = "https://exercisedb.p.rapidapi.com/exercises"
-    HEADERS = {
-        "X-RapidAPI-Key": "22a8c20e56msh9797b7aeae03bdfp1b629cjsna83e21797dde",
-        "X-RapidAPI-Host": "exercisedb.p.rapidapi.com"
-    }
+    BASE_URL = "http://127.0.0.1:8000/exercises/"
 
     @classmethod
     def fetch_exercises(cls):
-        """Fetch exercise data from RapidAPI."""
+        """Fetch exercises from FastAPI backend."""
         try:
-            response = requests.get(cls.BASE_URL, headers=cls.HEADERS)
+            response = requests.get(cls.BASE_URL, timeout=15)
             if response.status_code == 200:
-                return response.json()  # ✅ Returns a list of exercises
+                return response.json()
             else:
-                print(f"❌ API ERROR: {response.status_code}, {response.text}")
+                print(f"❌ ERROR: {response.status_code}, {response.text}")
                 return []
-        except Exception as e:
+        except requests.exceptions.RequestException as e:
             print(f"🚨 API Request Failed: {e}")
             return []
+
+# ✅ Base Screen Class for Category-based Exercise Filtering
+class ExerciseCategoryScreen(Screen):
+    category_filter = StringProperty("")
+    saved_exercises = set()  # ✅ Shared across all screens
+
+    def on_pre_enter(self):
+        print(f"🔄 Entering {self.category_filter} Workouts...")
+        self.load_exercises()
+
+    def load_exercises(self):
+        """Load exercises for the selected category and display them with a save button."""
+        exercises = ExerciseAPI.fetch_exercises()
+        exercise_list = self.ids.get("exercise_list", None)
+
+        if not exercise_list:
+            print("🚨 ERROR: 'exercise_list' ID not found in with_equipment.kv!")
+            return
+
+        exercise_list.clear_widgets()
+        print(f"📌 Found {len(exercises)} exercises in API response for {self.category_filter}")
+
+        if not exercises:
+            exercise_list.add_widget(OneLineListItem(text="⚠️ No exercises available"))
+            return
+
+        category_name = self.category_filter.lower()
+
+        filtered_exercises = [
+            ex for ex in exercises if "tags" in ex and category_name in [tag.lower() for tag in eval(ex["tags"])]
+        ]
+
+        if not filtered_exercises:
+            print(f"⚠️ No exercises found in category '{self.category_filter}'")
+            exercise_list.add_widget(OneLineListItem(text=f"⚠️ No exercises in {self.category_filter}"))
+            return
+
+        app = MDApp.get_running_app()
+
+        for exercise in filtered_exercises:
+            name = exercise.get("name", "Unknown Exercise")
+
+            # ✅ Debugging: Ensure it's being added to the list
+            print(f"🔹 Adding exercise to {self.category_filter}: {name}")
+
+            item = OneLineAvatarIconListItem(text=name)
+
+            # ✅ Set the correct icon state based on whether the exercise is saved
+            icon_name = "bookmark" if name in app.saved_exercises else "bookmark-outline"
+            save_button = IconRightWidget(icon=icon_name)
+            save_button.bind(on_release=lambda btn, ex=name: self.toggle_save_exercise(ex, btn))
+
+            item.add_widget(save_button)
+            exercise_list.add_widget(item)
+
+    def toggle_save_exercise(self, exercise_name, save_button):
+        """Bookmark or remove an exercise from saved workouts and update icon."""
+        app = MDApp.get_running_app()
+
+        if exercise_name in app.saved_exercises:
+            app.saved_exercises.remove(exercise_name)
+            save_button.icon = "bookmark-outline"  # ✅ Update icon to unselected
+            print(f"❌ Removed {exercise_name} from saved exercises")
+        else:
+            app.saved_exercises.add(exercise_name)
+            save_button.icon = "bookmark"  # ✅ Update icon to selected
+            print(f"✅ Added {exercise_name} to saved exercises")
+
+        app.update_saved_screen()  # ✅ Refresh saved screen dynamically
 
 # ✅ Clickable MDCard Class
 class ClickableCard(MDCard, ButtonBehavior):
@@ -60,16 +124,6 @@ class PasswordTextField(MDTextField):
                 self.password = True  # Hide password
         return super().on_touch_down(touch)
 
-# ✅ Generic Exercise Screen Template
-class ExerciseScreen(Screen):
-    exercise_name = StringProperty("")
-    exercise_image = StringProperty("")
-    exercise_description = StringProperty("")
-
-    def on_enter(self):
-        """Runs when the screen is opened and fetches data dynamically."""
-        print(f"📥 Loading exercise: {self.exercise_name}")
-
 # ✅ Define Screens
 class LandingScreen(Screen):
     pass
@@ -87,26 +141,52 @@ class HomeScreen(Screen):
     pass
 
 class SavedScreen(Screen):
-    pass
+    def on_pre_enter(self):
+        """Load saved exercises when switching to SavedScreen"""
+        print("🔄 Loading Saved Exercises...")
+        self.load_saved_exercises()
+
+    def load_saved_exercises(self):
+        """Populate saved exercises list"""
+        exercise_list = self.ids.get("exercise_list", None)
+
+        if not exercise_list:
+            print("🚨 ERROR: 'exercise_list' ID not found in KV file!")
+            return
+
+        exercise_list.clear_widgets()
+
+        app = MDApp.get_running_app()
+        saved_exercises = app.saved_exercises
+
+        if not saved_exercises:
+            exercise_list.add_widget(OneLineListItem(text="⚠️ No saved exercises yet!"))
+            return
+
+        for name in saved_exercises:
+            item = OneLineListItem(text=name)
+            exercise_list.add_widget(item)
 
 class UserScreen(Screen):
     pass
 
-class WithEquipmentScreen(Screen):
-    pass
+# ✅ Category Screens (Now Inheriting from ExerciseCategoryScreen)
+class WithEquipmentScreen(ExerciseCategoryScreen):
+    category_filter = StringProperty("with equipment")
 
-class WithoutEquipmentScreen(Screen):
-    pass
 
-class OutdoorScreen(Screen):
-    pass
+class WithoutEquipmentScreen(ExerciseCategoryScreen):
+    category_filter = StringProperty("without equipment")
 
-class WellnessScreen(Screen):
-    pass
+class OutdoorScreen(ExerciseCategoryScreen):
+    category_filter = StringProperty("outdoor")
+
+class WellnessScreen(ExerciseCategoryScreen):
+    category_filter = StringProperty("wellness")
 
 # ✅ Register Screens in Factory
 Factory.register("ClickableCard", cls=ClickableCard)
-Factory.register("ExerciseScreen", cls=ExerciseScreen)
+Factory.register("ExerciseCategoryScreen", cls=ExerciseCategoryScreen)
 Factory.register("HomeScreen", cls=HomeScreen)
 Factory.register("LandingScreen", cls=LandingScreen)
 Factory.register("SignUpScreen", cls=SignUpScreen)
@@ -114,6 +194,8 @@ Factory.register("LoginScreen", cls=LoginScreen)
 Factory.register("UserInfoScreen", cls=UserInfoScreen)
 Factory.register("SavedScreen", cls=SavedScreen)
 Factory.register("UserScreen", cls=UserScreen)
+
+# ✅ Explicitly Register Category Screens
 Factory.register("WithEquipmentScreen", cls=WithEquipmentScreen)
 Factory.register("WithoutEquipmentScreen", cls=WithoutEquipmentScreen)
 Factory.register("OutdoorScreen", cls=OutdoorScreen)
@@ -132,6 +214,7 @@ class MainApp(MDApp):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.user_info = {"birthdate": None, "gender": None, "height": None, "weight": None}
+        self.saved_exercises = set()
 
     def build(self):
         self.sm = ScreenManager()
@@ -142,19 +225,12 @@ class MainApp(MDApp):
         self.sm.add_widget(HomeScreen(name="home"))
         self.sm.add_widget(SavedScreen(name="saved"))
         self.sm.add_widget(UserScreen(name="user"))
+
+        # ✅ Add screens for each workout category
         self.sm.add_widget(WithEquipmentScreen(name="with_equipment"))
         self.sm.add_widget(WithoutEquipmentScreen(name="without_equipment"))
         self.sm.add_widget(OutdoorScreen(name="outdoor"))
         self.sm.add_widget(WellnessScreen(name="wellness"))
-
-        # ✅ Fetch API Data and Dynamically Create Exercise Screens
-        exercise_data = ExerciseAPI.fetch_exercises()
-        for exercise in exercise_data[:10]:  # Limit to 10 exercises for now
-            screen = ExerciseScreen(name=str(exercise["id"]))
-            screen.exercise_name = exercise["name"]
-            screen.exercise_image = exercise["gifUrl"]  # Ensure this is a valid URL
-            screen.exercise_description = f"Target: {exercise['target']} | Equipment: {exercise['equipment']}"
-            self.sm.add_widget(screen)
 
         return self.sm
 
@@ -165,6 +241,19 @@ class MainApp(MDApp):
             self.sm.current = screen_name
         else:
             print(f"🚨 ERROR: Screen '{screen_name}' not found!")
+
+    def switch_to_exercises(self, category):
+        """Switch to ExerciseScreen and apply the category filter"""
+        screen_name = category.lower().replace(" ", "_")  # ✅ Converts "With Equipment" -> "with_equipment"
+
+        if screen_name in self.sm.screen_names:
+            screen = self.sm.get_screen(screen_name)
+            screen.category_filter = category  # ✅ Apply filter
+            screen.load_exercises()
+            self.sm.current = screen_name
+        else:
+            print(f"🚨 ERROR: No screen found for category '{category}' (Converted Name: {screen_name})")
+            print(f"📌 Available screens: {self.sm.screen_names}")  # ✅ Debugging
 
     def switch_to_login(self):
         self.switch_to_screen("login")
@@ -250,6 +339,40 @@ class MainApp(MDApp):
         if self.user_info.get("gender") == gender:
             return 0.6, 0.4, 1, 1  # Selected color (Purple)
         return 0.95, 0.92, 1, 1  # Default color (Light Purple)
+
+    def update_saved_screen(self):
+        """Update the saved screen with bookmarked exercises."""
+        saved_screen = self.sm.get_screen("saved")
+        exercise_list = saved_screen.ids.get("exercise_list", None)
+
+        if not exercise_list:
+            print("🚨 ERROR: 'exercise_list' not found in SavedScreen KV file!")
+            return
+
+        exercise_list.clear_widgets()
+
+        if not self.saved_exercises:
+            exercise_list.add_widget(OneLineListItem(text="⚠️ No saved exercises yet"))
+            return
+
+        print(f"📌 Updating saved screen with {len(self.saved_exercises)} exercises")
+
+        for exercise in sorted(self.saved_exercises):
+            item = OneLineListItem(text=exercise)
+            exercise_list.add_widget(item)
+
+    def toggle_bookmark(self, exercise_name):
+        """Toggle bookmark status for an exercise."""
+        if exercise_name in self.saved_exercises:
+            print(f"❌ Removing {exercise_name} from saved exercises.")
+            self.saved_exercises.remove(exercise_name)
+        else:
+            print(f"✅ Saving {exercise_name} to saved exercises.")
+            self.saved_exercises.add(exercise_name)
+
+        # ✅ Update saved screen
+        self.update_saved_screen()
+
 
 if __name__ == "__main__":
     try:
