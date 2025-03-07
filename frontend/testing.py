@@ -11,7 +11,6 @@ from kivymd.uix.list import OneLineListItem, OneLineAvatarListItem, ImageLeftWid
 from kivymd.uix.pickers import MDDatePicker
 from kivymd.uix.textfield import MDTextField
 
-
 # ✅ Set Kivy to use ANGLE for OpenGL stability
 os.environ["KIVY_GL_BACKEND"] = "angle_sdl2"
 
@@ -36,6 +35,7 @@ class ExerciseAPI:
 # ✅ Base Screen Class for Category-based Exercise Filtering
 class ExerciseCategoryScreen(Screen):
     category_filter = StringProperty("")
+    saved_exercises = set()  # ✅ Shared across all screens
 
     def on_pre_enter(self):
         print(f"🔄 Entering {self.category_filter} Workouts...")
@@ -60,13 +60,15 @@ class ExerciseCategoryScreen(Screen):
         category_name = self.category_filter.lower()
 
         filtered_exercises = [
-            ex for ex in exercises if "tags" in ex and category_name in map(str.lower, eval(ex["tags"]))
+            ex for ex in exercises if "tags" in ex and category_name in [tag.lower() for tag in eval(ex["tags"])]
         ]
 
         if not filtered_exercises:
             print(f"⚠️ No exercises found in category '{self.category_filter}'")
             exercise_list.add_widget(OneLineListItem(text=f"⚠️ No exercises in {self.category_filter}"))
             return
+
+        app = MDApp.get_running_app()
 
         for exercise in filtered_exercises:
             name = exercise.get("name", "Unknown Exercise")
@@ -76,35 +78,28 @@ class ExerciseCategoryScreen(Screen):
 
             item = OneLineAvatarIconListItem(text=name)
 
-            save_button = IconRightWidget(icon="bookmark-outline")
-            save_button.bind(on_release=lambda btn, ex=exercise: self.toggle_save_exercise(ex, btn))
+            # ✅ Set the correct icon state based on whether the exercise is saved
+            icon_name = "bookmark" if name in app.saved_exercises else "bookmark-outline"
+            save_button = IconRightWidget(icon=icon_name)
+            save_button.bind(on_release=lambda btn, ex=name: self.toggle_save_exercise(ex, btn))
 
             item.add_widget(save_button)
             exercise_list.add_widget(item)
 
-    def toggle_save_exercise(self, exercise_name, *args):
-        """Bookmark or remove an exercise from saved workouts."""
-        if exercise_name in self.saved_exercises:
-            self.saved_exercises.remove(exercise_name)
+    def toggle_save_exercise(self, exercise_name, save_button):
+        """Bookmark or remove an exercise from saved workouts and update icon."""
+        app = MDApp.get_running_app()
+
+        if exercise_name in app.saved_exercises:
+            app.saved_exercises.remove(exercise_name)
+            save_button.icon = "bookmark-outline"  # ✅ Update icon to unselected
             print(f"❌ Removed {exercise_name} from saved exercises")
         else:
-            self.saved_exercises.add(exercise_name)
+            app.saved_exercises.add(exercise_name)
+            save_button.icon = "bookmark"  # ✅ Update icon to selected
             print(f"✅ Added {exercise_name} to saved exercises")
 
-        self.update_saved_screen()  # ✅ Refresh saved screen dynamically
-
-    def update_saved_screen(self):
-        """Refresh the saved screen with bookmarked exercises."""
-        saved_screen = MDApp.get_running_app().sm.get_screen("saved")
-        exercise_list = saved_screen.ids.exercise_list
-        exercise_list.clear_widgets()
-
-        if not self.saved_exercises:
-            exercise_list.add_widget(OneLineListItem(text="⚠️ No saved exercises"))
-            return
-
-        for exercise_name in self.saved_exercises:
-            exercise_list.add_widget(OneLineListItem(text=exercise_name))
+        app.update_saved_screen()  # ✅ Refresh saved screen dynamically
 
 # ✅ Clickable MDCard Class
 class ClickableCard(MDCard, ButtonBehavior):
@@ -172,48 +167,13 @@ class SavedScreen(Screen):
             item = OneLineListItem(text=name)
             exercise_list.add_widget(item)
 
-
 class UserScreen(Screen):
     pass
 
 # ✅ Category Screens (Now Inheriting from ExerciseCategoryScreen)
-class WithEquipmentScreen(Screen):
+class WithEquipmentScreen(ExerciseCategoryScreen):
     category_filter = StringProperty("with equipment")
 
-    def on_pre_enter(self):
-        self.load_exercises()
-
-    def load_exercises(self):
-        """Fetch exercises and display them with images."""
-        exercises = ExerciseAPI.fetch_exercises()
-        exercise_list = self.ids.get("exercise_list", None)
-
-        if not exercise_list:
-            print("🚨 ERROR: 'exercise_list' ID not found in KV file!")
-            return
-
-        exercise_list.clear_widgets()
-
-        if not exercises:
-            exercise_list.add_widget(OneLineListItem(text="⚠️ No exercises available"))
-            return
-
-        category_name = self.category_filter.lower()
-        filtered_exercises = [
-            ex for ex in exercises if "tags" in ex and category_name in map(str.lower(), eval(ex["tags"]))
-        ]
-
-        if not filtered_exercises:
-            exercise_list.add_widget(OneLineListItem(text=f"⚠️ No exercises in {self.category_filter}"))
-            return
-
-        for exercise in filtered_exercises:
-            name = exercise.get("name", "Unknown Exercise")
-            image_url = exercise.get("media_url", "https://res.cloudinary.com/dudftatqj/image/upload/v1741316241/logo_iehkuj.png")
-
-            item = OneLineAvatarListItem(text=name)
-            item.add_widget(ImageLeftWidget(source=image_url))
-            exercise_list.add_widget(item)
 
 class WithoutEquipmentScreen(ExerciseCategoryScreen):
     category_filter = StringProperty("without equipment")
