@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from backend.database import SessionLocal, engine
+from backend.database import SessionLocal, engine, get_user_data
 from backend.models import Base, Exercise, User
 from backend.schemas import UserCreate, LoginRequest
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -23,6 +23,14 @@ def get_db():
     finally:
         db.close()
 
+@app.get("/user/{user_id}")
+def get_user_info(user_id: int, db: Session = Depends(get_db)):
+    user_data = get_user_data(db, user_id)
+    if user_data:
+        height, weight = user_data
+        return {"height": height, "weight": weight}
+    return {"error": "User not found"}
+
 @app.post("/login/")
 def login(request: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == request.email).first()
@@ -34,31 +42,31 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
 
 
 # Signup route (for registering users)
-# @app.post("/signup/")
-# def signup(user: UserCreate, db: Session = Depends(get_db)):
-#     existing_user = db.query(User).filter(User.email == user.email).first()
-#     if existing_user:
-#         raise HTTPException(status_code=400, detail="Email already registered")
-#
-#     # Hash the password before saving it
-#     hashed_password = generate_password_hash(user.password, method='pbkdf2:sha256')
-#
-#     # Create a new user object
-#     new_user = User(
-#         username=user.username,
-#         full_name=user.full_name,
-#         email=user.email,
-#         password_hash=hashed_password,
-#         dob=user.dob,
-#         weight=user.weight,
-#         height=user.height,
-#         gender=user.gender,
-#         role=user.role
-#     )
-#
-#     # Save the new user to the database
-#     db.add(new_user)
-#     db.commit()
-#     db.refresh(new_user)
-#
-#     return {"message": "User created successfully", "user_id": new_user.id}
+@app.post("/signup/")
+def signup(user: UserCreate, db: Session = Depends(get_db)):
+    existing_user = db.query(User).filter(User.email == user.email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    # Hash the password before saving it
+    hashed_password = generate_password_hash(user.password, method='pbkdf2:sha256')
+
+    # Create a new user object
+    new_user = User(
+        username=user.username,
+        full_name=user.full_name,
+        email=user.email,
+        password_hash=hashed_password,
+        dob=user.dob,
+        weight=user.weight,
+        height=user.height,
+        gender=user.gender,
+        role=user.role
+    )
+
+    # Save the new user to the database
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return {"message": "User created successfully", "user_id": new_user.id}
