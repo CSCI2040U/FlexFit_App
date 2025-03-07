@@ -1,8 +1,10 @@
 import os
+import sqlite3
+
 import requests
 from kivy.factory import Factory
 from kivy.lang import Builder
-from kivy.properties import StringProperty
+from kivy.properties import StringProperty, NumericProperty
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivymd.app import MDApp
@@ -40,7 +42,7 @@ class ExerciseCategoryScreen(Screen):
         self.load_exercises()
 
     def load_exercises(self):
-        """Load exercises based on the selected category."""
+        """Fetch exercises and display them with images."""
         exercises = ExerciseAPI.fetch_exercises()
         exercise_list = self.ids.get("exercise_list", None)
 
@@ -51,26 +53,26 @@ class ExerciseCategoryScreen(Screen):
         exercise_list.clear_widgets()
 
         if not exercises:
-            print("⚠️ No exercises available from API.")
             exercise_list.add_widget(OneLineListItem(text="⚠️ No exercises available"))
             return
 
-        # ✅ Convert category name to lowercase
         category_name = self.category_filter.lower()
-
-        # ✅ Convert `tags` from string to list
         filtered_exercises = [
             ex for ex in exercises if "tags" in ex and category_name in map(str.lower, eval(ex["tags"]))
         ]
 
         if not filtered_exercises:
-            print(f"⚠️ No exercises found in category '{self.category_filter}'")
             exercise_list.add_widget(OneLineListItem(text=f"⚠️ No exercises in {self.category_filter}"))
             return
 
         for exercise in filtered_exercises:
             name = exercise.get("name", "Unknown Exercise")
-            exercise_list.add_widget(OneLineListItem(text=name))
+            image_url = exercise.get("media_url", "https://res.cloudinary.com/dudftatqj/image/upload/v1741316241/logo_iehkuj.png")
+
+            item = OneLineAvatarListItem(text=name)
+            item.add_widget(ImageLeftWidget(source=image_url))
+            exercise_list.add_widget(item)
+
 
 # ✅ Clickable MDCard Class
 class ClickableCard(MDCard, ButtonBehavior):
@@ -114,47 +116,39 @@ class HomeScreen(Screen):
 class SavedScreen(Screen):
     pass
 
+
 class UserScreen(Screen):
-    pass
+    # Use NumericProperty for numeric values (both int and float)
+    height = NumericProperty(0.0)  # Default value 0.0
+    weight = NumericProperty(0.0)  # Default value 0.0
+
+    def on_enter(self):
+        # Fetch user data when the screen is entered
+        self.load_user_data()
+
+    def load_user_data(self):
+        user_id = 1  # Use the actual logged-in user's ID here
+        try:
+            # Make an API request to fetch the user data
+            response = requests.get(f"http://127.0.0.1:8000/user/{user_id}")  # Update URL as needed
+
+            if response.status_code == 200:
+                user_data = response.json()
+                if 'height' in user_data and 'weight' in user_data:
+                    # Ensure the values are numeric and assign them to the NumericProperty
+                    self.height = float(user_data['height']) if isinstance(user_data['height'], (int, float)) else 0.0
+                    self.weight = float(user_data['weight']) if isinstance(user_data['weight'], (int, float)) else 0.0
+            else:
+                self.height = 0.0
+                self.weight = 0.0
+        except requests.exceptions.RequestException as e:
+            self.height = 0.0
+            self.weight = 0.0
+            print(f"Error fetching user data: {e}")
 
 # ✅ Category Screens (Now Inheriting from ExerciseCategoryScreen)
-class WithEquipmentScreen(Screen):
+class WithEquipmentScreen(ExerciseCategoryScreen):
     category_filter = StringProperty("with equipment")
-
-    def on_pre_enter(self):
-        self.load_exercises()
-
-    def load_exercises(self):
-        """Fetch exercises and display them with images."""
-        exercises = ExerciseAPI.fetch_exercises()
-        exercise_list = self.ids.get("exercise_list", None)
-
-        if not exercise_list:
-            print("🚨 ERROR: 'exercise_list' ID not found in KV file!")
-            return
-
-        exercise_list.clear_widgets()
-
-        if not exercises:
-            exercise_list.add_widget(OneLineListItem(text="⚠️ No exercises available"))
-            return
-
-        category_name = self.category_filter.lower()
-        filtered_exercises = [
-            ex for ex in exercises if "tags" in ex and category_name in map(str.lower, eval(ex["tags"]))
-        ]
-
-        if not filtered_exercises:
-            exercise_list.add_widget(OneLineListItem(text=f"⚠️ No exercises in {self.category_filter}"))
-            return
-
-        for exercise in filtered_exercises:
-            name = exercise.get("name", "Unknown Exercise")
-            image_url = exercise.get("media_url", "https://res.cloudinary.com/dudftatqj/image/upload/v1741316241/logo_iehkuj.png")
-
-            item = OneLineAvatarListItem(text=name)
-            item.add_widget(ImageLeftWidget(source=image_url))
-            exercise_list.add_widget(item)
 
 class WithoutEquipmentScreen(ExerciseCategoryScreen):
     category_filter = StringProperty("without equipment")
