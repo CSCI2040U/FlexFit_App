@@ -3,6 +3,7 @@ from backend.database import Base  # Import Base from database.py
 
 class User(Base):
     __tablename__ = 'users'
+    __table_args__ = {'extend_existing': True}  # Add this line to extend the existing table definition
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
@@ -17,6 +18,7 @@ class User(Base):
 
 class Exercise(Base):
     __tablename__ = "exercises"
+    __table_args__ = {'extend_existing': True}  # Add this line to extend the existing table definition
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False, unique=True)

@@ -31,6 +31,8 @@ def create_db():
 # User model
 class User(Base):
     __tablename__ = 'users'
+    __table_args__ = {'extend_existing': True}  # Add this line to extend the existing table definition
+
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)

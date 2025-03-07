@@ -1,3 +1,4 @@
+import json
 import os
 import requests
 from kivy.factory import Factory
@@ -10,6 +11,8 @@ from kivymd.uix.card import MDCard
 from kivymd.uix.list import OneLineListItem, OneLineAvatarListItem, ImageLeftWidget, OneLineAvatarIconListItem, IconRightWidget
 from kivymd.uix.pickers import MDDatePicker
 from kivymd.uix.textfield import MDTextField
+
+from frontend.test import LoginScreen
 
 # ✅ Set Kivy to use ANGLE for OpenGL stability
 os.environ["KIVY_GL_BACKEND"] = "angle_sdl2"
@@ -31,6 +34,18 @@ class ExerciseAPI:
         except requests.exceptions.RequestException as e:
             print(f"🚨 API Request Failed: {e}")
             return []
+
+def save_token(token: str):
+    with open('auth_token.json', 'w') as f:
+        json.dump({"token": token}, f)
+
+def load_token():
+    try:
+        with open('auth_token.json', 'r') as f:
+            data = json.load(f)
+            return data.get("token")
+    except FileNotFoundError:
+        return None
 
 # ✅ Base Screen Class for Category-based Exercise Filtering
 class ExerciseCategoryScreen(Screen):
@@ -124,12 +139,50 @@ class PasswordTextField(MDTextField):
                 self.password = True  # Hide password
         return super().on_touch_down(touch)
 
+
+def login_user(email: str, password: str):
+    url = "http://127.0.0.1:8000/login/"
+    data = {"email": email, "password": password}
+
+    # Send POST request to login
+    response = requests.post(url, json=data)
+
+    # Check if login was successful
+    if response.status_code == 200:
+        token = response.json().get("access_token")
+        save_token(token)  # Save the token locally
+        return token
+    else:
+        print("Login failed:", response.json())
+        return None
+
 # ✅ Define Screens
 class LandingScreen(Screen):
     pass
 
+
 class LoginScreen(Screen):
-    pass
+    def on_login(self):
+        email = self.ids.login_email.text  # Fetch the email from the text field
+        password = self.ids.login_password.text  # Fetch the password from the text field
+
+        # Validate the input fields
+        if not email or not password:
+            # Optionally, show an error dialog or message if fields are empty
+            print("❌ Email and password cannot be empty!")
+            return
+
+        # Proceed with the login if validation passes
+        token = login_user(email, password)
+
+        if token:
+            print("Login successful")
+            app = MDApp.get_running_app()
+            app.switch_to_home()  # Switch to home screen after successful login
+        else:
+            print("❌ Invalid credentials")
+            # You can display an error message or dialog here if the login fails
+
 
 class SignUpScreen(Screen):
     pass
