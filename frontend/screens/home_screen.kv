@@ -22,14 +22,14 @@
                 size_hint_x: 1
 
                 ClickableCard:
-                    target_screen: "with_equipment"
                     radius: dp(10)
                     md_bg_color: 0.9, 0.9, 1, 1
                     size_hint_x: 1/2
                     elevation: 1/2
+                    on_release: app.switch_to_exercises("With Equipment")
                     BoxLayout:
                         orientation: 'vertical'
-                        Image:
+                        AsyncImage:
                             source: "assets/indoor_workout.jpg"
                             size_hint_y: 1
                         MDLabel:
@@ -38,14 +38,14 @@
                             size_hint_y: 1/4
 
                 ClickableCard:
-                    target_screen: "without_equipment"
                     radius: dp(10)
                     md_bg_color: 0.9, 0.9, 1, 1
                     size_hint_x: 1/2
                     elevation: 1/2
+                    on_release: app.switch_to_exercises("Without Equipment")
                     BoxLayout:
                         orientation: 'vertical'
-                        Image:
+                        AsyncImage:
                             source: "assets/indoor_workout.jpg"
                             size_hint_y: 1
                         MDLabel:
@@ -54,14 +54,14 @@
                             size_hint_y: 1/4
 
                 ClickableCard:
-                    target_screen: "outdoor"
                     radius: dp(10)
                     md_bg_color: 0.9, 0.9, 1, 1
                     size_hint_x: 1/2
                     elevation: 1/2
+                    on_release: app.switch_to_exercises("Outdoor")
                     BoxLayout:
                         orientation: 'vertical'
-                        Image:
+                        AsyncImage:
                             source: "assets/outdoor_workout.jpg"
                             size_hint_y: 1
                         MDLabel:
@@ -70,14 +70,14 @@
                             size_hint_y: 1/4
 
                 ClickableCard:
-                    target_screen: "wellness"
                     radius: dp(10)
                     md_bg_color: 0.9, 0.9, 1, 1
                     size_hint_x: 1/2
                     elevation: 1/2
+                    on_release: app.switch_to_exercises("Wellness")
                     BoxLayout:
                         orientation: 'vertical'
-                        Image:
+                        AsyncImage:
                             source: "assets/wellness_workout.jpg"
                             size_hint_y: 1
                         MDLabel:
