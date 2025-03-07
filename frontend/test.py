@@ -9,7 +9,7 @@ from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivymd.app import MDApp
 from kivymd.uix.card import MDCard
-from kivymd.uix.list import OneLineListItem, OneLineAvatarListItem, ImageLeftWidget
+from kivymd.uix.list import OneLineListItem, OneLineAvatarListItem, ImageLeftWidget, IconRightWidget
 from kivymd.uix.pickers import MDDatePicker
 from kivymd.uix.textfield import MDTextField
 
@@ -35,10 +35,28 @@ class ExerciseAPI:
             return []
 
 # ✅ Base Screen Class for Category-based Exercise Filtering
+def toggle_save_exercise(exercise_name, save_button):
+    """Bookmark or remove an exercise from saved workouts and update icon."""
+    app = MDApp.get_running_app()
+
+    if exercise_name in app.saved_exercises:
+        app.saved_exercises.remove(exercise_name)
+        save_button.icon = "bookmark-outline"  # ✅ Update icon to unselected
+        print(f"❌ Removed {exercise_name} from saved exercises")
+    else:
+        app.saved_exercises.add(exercise_name)
+        save_button.icon = "bookmark"  # ✅ Update icon to selected
+        print(f"✅ Added {exercise_name} to saved exercises")
+
+    app.update_saved_screen()  # ✅ Refresh saved screen dynamically
+
+# ✅ Base Screen Class for Category-based Exercise Filtering
 class ExerciseCategoryScreen(Screen):
     category_filter = StringProperty("")
+    saved_exercises = set()  # ✅ Shared across all screens
 
     def on_pre_enter(self):
+        print(f"🔄 Entering {self.category_filter} Workouts...")
         self.load_exercises()
 
     def load_exercises(self):
@@ -51,26 +69,39 @@ class ExerciseCategoryScreen(Screen):
             return
 
         exercise_list.clear_widgets()
+        print(f"📌 Found {len(exercises)} exercises in API response for {self.category_filter}")
+
 
         if not exercises:
             exercise_list.add_widget(OneLineListItem(text="⚠️ No exercises available"))
             return
 
         category_name = self.category_filter.lower()
+
         filtered_exercises = [
-            ex for ex in exercises if "tags" in ex and category_name in map(str.lower, eval(ex["tags"]))
+            ex for ex in exercises if "tags" in ex and category_name in [tag.lower() for tag in eval(ex["tags"])]
         ]
 
         if not filtered_exercises:
+            print(f"⚠️ No exercises found in category '{self.category_filter}'")
             exercise_list.add_widget(OneLineListItem(text=f"⚠️ No exercises in {self.category_filter}"))
             return
+
+        app = MDApp.get_running_app()
 
         for exercise in filtered_exercises:
             name = exercise.get("name", "Unknown Exercise")
             image_url = exercise.get("media_url", "https://res.cloudinary.com/dudftatqj/image/upload/v1741316241/logo_iehkuj.png")
 
+            print(f"🔹 Adding exercise to {self.category_filter}: {name}")
+
             item = OneLineAvatarListItem(text=name)
+            icon_name = "bookmark" if name in app.saved_exercises else "bookmark-outline"
+            save_button = IconRightWidget(icon=icon_name)
+            save_button.bind(on_release=lambda btn, ex=name: toggle_save_exercise(ex, btn))
+
             item.add_widget(ImageLeftWidget(source=image_url))
+            item.add_widget(save_button)
             exercise_list.add_widget(item)
 
 
@@ -114,13 +145,37 @@ class HomeScreen(Screen):
     pass
 
 class SavedScreen(Screen):
-    pass
+    def on_pre_enter(self):
+        """Load saved exercises when switching to SavedScreen"""
+        print("🔄 Loading Saved Exercises...")
+        self.load_saved_exercises()
+
+    def load_saved_exercises(self):
+        """Populate saved exercises list"""
+        exercise_list = self.ids.get("exercise_list", None)
+
+        if not exercise_list:
+            print("🚨 ERROR: 'exercise_list' ID not found in KV file!")
+            return
+
+        exercise_list.clear_widgets()
+
+        app = MDApp.get_running_app()
+        saved_exercises = app.saved_exercises
+
+        if not saved_exercises:
+            exercise_list.add_widget(OneLineListItem(text="⚠️ No saved exercises yet!"))
+            return
+
+        for name in saved_exercises:
+            item = OneLineListItem(text=name)
+            exercise_list.add_widget(item)
 
 
 class UserScreen(Screen):
     # Use NumericProperty for numeric values (both int and float)
-    height = NumericProperty(0.0)  # Default value 0.0
-    weight = NumericProperty(0.0)  # Default value 0.0
+    height = NumericProperty(5.10)  # Default value 0.0
+    weight = NumericProperty(80)  # Default value 0.0
 
     def on_enter(self):
         # Fetch user data when the screen is entered
@@ -189,6 +244,8 @@ class MainApp(MDApp):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.user_info = {"birthdate": None, "gender": None, "height": None, "weight": None}
+        self.saved_exercises = set()
+
 
     def build(self):
         self.sm = ScreenManager()
