@@ -1,0 +1,82 @@
+<AddWorkoutScreen>:
+    name: "add_workout"
+
+    MDBoxLayout:
+        orientation: "vertical"
+        padding: dp(20)
+        spacing: dp(10)
+
+        MDLabel:
+            text: "Add a Workout"
+            font_style: "H5"
+            halign: "center"
+
+        MDLabel:
+            text: "Name"
+            font_style: "Subtitle2"
+            halign: "center"
+
+        MDTextField:
+            id: workout_name
+            mode: "rectangle"
+            size_hint_x: 0.9
+            pos_hint: {"center_x": 0.5}
+
+        MDLabel:
+            text: "Description"
+            font_style: "Subtitle2"
+            halign: "center"
+
+        MDTextField:
+            id: workout_description
+            mode: "rectangle"
+            size_hint_x: 0.9
+            pos_hint: {"center_x": 0.5}
+
+        MDLabel:
+            text: "Select Toughness Level"
+            font_style: "Subtitle2"
+            halign: "center"
+
+        MDRaisedButton:
+            text: "Easy"
+            size_hint_x: 0.3
+            pos_hint: {"center_x": 0.5}
+            on_release: root.set_toughness("Easy")
+
+        MDRaisedButton:
+            text: "Medium"
+            size_hint_x: 0.3
+            pos_hint: {"center_x": 0.5}
+            on_release: root.set_toughness("Medium")
+
+        MDRaisedButton:
+            text: "Hard"
+            size_hint_x: 0.3
+            pos_hint: {"center_x": 0.5}
+            on_release: root.set_toughness("Hard")
+
+        MDLabel:
+            text: "Enter tags (comma-separated)"
+            font_style: "Subtitle2"
+            halign: "center"
+
+        MDTextField:
+            id: workout_tags
+            mode: "rectangle"
+            size_hint_x: 0.9
+            pos_hint: {"center_x": 0.5}
+
+        MDRaisedButton:
+            text: "Submit Workout"
+            size_hint_x: 0.9
+            pos_hint: {"center_x": 0.5}
+            on_release: app.submit_workout()
+
+        MDLabel:
+            text: "[ref=user][b]Go back[/b][/ref]"
+            markup: True
+            theme_text_color: "Custom"
+            text_color: 0.2, 0.4, 1, 1  # Blue hyperlink color
+            halign: "center"
+            on_ref_press: app.switch_to_user()

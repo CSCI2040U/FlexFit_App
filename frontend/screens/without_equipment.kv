@@ -11,7 +11,6 @@
             MDTextField:
                 id: search_field
                 mode: "rectangle"
-                hint_text: "Search exercises..."
                 icon_left: "magnify"
                 size_hint_x: 0.9
                 size_hint_y: None
@@ -19,6 +18,8 @@
                 pos_hint: {"center_x": 0.5}
                 md_bg_color: 0.95, 0.92, 1, 1
                 radius: [25,]
+                on_text: root.on_search(self,self.text)
+
 
             MDLabel:
                 text: "Without Equipment Workouts"
@@ -34,7 +35,6 @@
 
                 MDList:
                     id: exercise_list
-#                    orientation: 'vertical'
                     size_hint_y: None
                     height: self.minimum_height  # ✅ Expands based on content
 

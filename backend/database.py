@@ -1,3 +1,5 @@
+from pydantic import BaseModel
+from typing import List
 from sqlalchemy import create_engine, Column, Integer, String, Float, Date
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.orm import Session
@@ -42,6 +44,18 @@ class User(Base):
     height = Column(String)  # Using Float for numerical data
     weight = Column(String)  # Using Float for numerical data
     dob = Column(Date)  # Using Date for date of birth
+
+class ExerciseCreate(BaseModel):
+    name: str
+    description: str
+    toughness: str
+    media_url: str = None
+    tags: List[str] = []
+    suggested_reps: int
+
+    class Config:
+        from_attributes = True
+
 
 # Fetch user data
 def get_user_data(db, user_id: int):

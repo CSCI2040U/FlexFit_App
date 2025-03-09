@@ -1,10 +1,11 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from backend.database import SessionLocal, engine, get_user_data
+from backend.database import SessionLocal, engine, get_user_data, ExerciseCreate
 from backend.models import Base, Exercise, User
 from backend.schemas import UserCreate, LoginRequest
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
+import json
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
 
@@ -52,6 +53,51 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+@app.post("/add_exercise/")
+def add_exercise(exercise: dict, db: Session = Depends(get_db)):
+    """Adds a new exercise to the database with debugging logs."""
+    try:
+        print(f"📌 Received Exercise Data: {exercise}")  # ✅ Log received data
+
+        # Ensure required fields exist
+        required_fields = ["name", "description", "toughness", "tags"]
+        for field in required_fields:
+            if field not in exercise:
+                raise HTTPException(status_code=400, detail=f"{field} is required")
+
+        if isinstance(exercise.get("tags"), list):
+            tags_json = json.dumps(exercise["tags"])  # Convert to string
+        elif isinstance(exercise.get("tags"), str):
+            tags_json = exercise["tags"]  # Already a valid JSON string
+        else:
+            tags_json = "[]"  # Default to empty list if invalid
+
+        # Set default image URL if media_url is not provided
+        default_image_url = "https://res.cloudinary.com/dudftatqj/image/upload/v1741316241/logo_iehkuj.png"
+        media_url = exercise.get("media_url", default_image_url)  # ✅ Assign default if missing
+
+        # ✅ Create new exercise
+        new_exercise = Exercise(
+            name=exercise["name"],
+            description=exercise["description"],
+            toughness=exercise["toughness"],
+            media_url=media_url,
+            tags=tags_json,
+            suggested_reps=exercise.get("suggested_reps", 10)  # Default to 10 reps
+        )
+
+        db.add(new_exercise)
+        db.commit()
+        db.refresh(new_exercise)
+
+        print(f"✅ Successfully Added Exercise: {new_exercise}")  # ✅ Debug Success
+        return {"message": "Exercise added successfully", "exercise_id": new_exercise.id, "media_url": media_url}
+
+    except Exception as e:
+        print(f"🚨 ERROR: {e}")  # ✅ Debugging
+        raise HTTPException(status_code=500, detail=str(e))  # Return actual error
 
 
 # Login route to authenticate users and return a JWT token
@@ -121,11 +167,39 @@ def get_user_info(user_id: int, db: Session = Depends(get_db)):
         return {"height": height, "weight": weight}
     return {"error": "User not found"}
 
+@app.post("/logout/")
+def logout():
+    """Invalidate the token on the client side."""
+    return {"message": "Logged out successfully"}
+
 
 # Route to get exercises (example)
 @app.get("/exercises/")
-def get_exercises(db: Session = Depends(get_db)):
-    exercises = db.query(Exercise).all()  # Fetch exercises from the database
-    if exercises:
-        return exercises
-    raise HTTPException(status_code=404, detail="No exercises found")
+def get_exercises(
+        search_query: str = Query(None),
+        db: Session = Depends(get_db)
+):
+    """Fetches all exercises and converts JSON tags back to Python lists."""
+    exercises = db.query(Exercise).all()
+    exercises_query = db.query(Exercise)
+
+    if search_query:  # ✅ Apply search filter ONLY if search_query exists
+        search_query = f"%{search_query.lower()}%"  # ✅ SQL wildcard search
+        exercises_query = exercises_query.filter(Exercise.name.ilike(search_query))
+
+    exercises = exercises_query.all()
+
+    # Convert JSON string back to list
+    exercises_list = []
+    for ex in exercises:
+        exercises_list.append({
+            "id": ex.id,
+            "name": ex.name,
+            "description": ex.description,
+            "toughness": ex.toughness,
+            "media_url": ex.media_url,
+            "tags": json.loads(ex.tags) if ex.tags else [],  # ✅ Convert back to list
+            "suggested_reps": ex.suggested_reps
+        })
+
+    return exercises_list if exercises_list else {"error": "No exercises found"}

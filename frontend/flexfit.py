@@ -1,6 +1,7 @@
 import json
 import os
 import requests
+from kivy.clock import Clock
 from kivy.factory import Factory
 from kivy.lang import Builder
 from kivy.properties import StringProperty
@@ -53,10 +54,10 @@ class ExerciseCategoryScreen(Screen):
     saved_exercises = set()  # ✅ Shared across all screens
 
     def on_pre_enter(self):
+        Clock.schedule_once(self.load_exercises, 0.1)  # ✅ Delay execution slightly
         print(f"🔄 Entering {self.category_filter} Workouts...")
-        self.load_exercises()
 
-    def load_exercises(self):
+    def load_exercises(self, dt=None, search_query=""):
         """Load exercises for the selected category and display them with a save button."""
         exercises = ExerciseAPI.fetch_exercises()
         exercise_list = self.ids.get("exercise_list", None)
@@ -74,9 +75,28 @@ class ExerciseCategoryScreen(Screen):
 
         category_name = self.category_filter.lower()
 
-        filtered_exercises = [
-            ex for ex in exercises if "tags" in ex and category_name in [tag.lower() for tag in eval(ex["tags"])]
-        ]
+        # ✅ Handle cases where search_query is None
+        if search_query:
+            search_query = search_query.lower()
+        else:
+            search_query = ""
+
+        filtered_exercises = []
+        for ex in exercises:
+            tags = ex.get("tags", "[]")
+
+            if isinstance(tags, str):
+                try:
+                    tags = json.loads(tags)  # ✅ Convert JSON string to list
+                except json.JSONDecodeError:
+                    tags = []
+
+            if category_name in [tag.lower() for tag in tags]:
+                # ✅ Apply search filter if search_query exists
+                if search_query and search_query.lower() not in ex["name"].lower():
+                    continue  # Skip exercises that don't match the search query
+
+                filtered_exercises.append(ex)
 
         if not filtered_exercises:
             print(f"⚠️ No exercises found in category '{self.category_filter}'")
@@ -100,6 +120,9 @@ class ExerciseCategoryScreen(Screen):
 
             item.add_widget(save_button)
             exercise_list.add_widget(item)
+
+    def on_search(self, instance, search_text = ""):
+        self.load_exercises(search_query = search_text)
 
     def toggle_save_exercise(self, exercise_name, save_button):
         """Bookmark or remove an exercise from saved workouts and update icon."""
@@ -199,8 +222,8 @@ class SavedScreen(Screen):
         print("🔄 Loading Saved Exercises...")
         self.load_saved_exercises()
 
-    def load_saved_exercises(self):
-        """Populate saved exercises list"""
+    def load_saved_exercises(self, search_query=""):
+        """Populate saved exercises list with optional search functionality"""
         exercise_list = self.ids.get("exercise_list", None)
 
         if not exercise_list:
@@ -216,9 +239,24 @@ class SavedScreen(Screen):
             exercise_list.add_widget(OneLineListItem(text="⚠️ No saved exercises yet!"))
             return
 
-        for name in saved_exercises:
+        # ✅ Apply search filter
+        filtered_exercises = [
+            name for name in saved_exercises if search_query.lower() in name.lower()
+        ] if search_query else saved_exercises
+
+        if not filtered_exercises:
+            exercise_list.add_widget(OneLineListItem(text="⚠️ No matches found!"))
+            return
+
+        for name in filtered_exercises:
             item = OneLineListItem(text=name)
             exercise_list.add_widget(item)
+
+    def on_search(self, instance, search_text=""):
+        """Triggered when search text changes"""
+        print(f"🔍 Searching for: {search_text}")
+        self.load_saved_exercises(search_query=search_text)
+
 
 class UserScreen(Screen):
     pass
@@ -236,6 +274,14 @@ class OutdoorScreen(ExerciseCategoryScreen):
 
 class WellnessScreen(ExerciseCategoryScreen):
     category_filter = StringProperty("wellness")
+
+class AddWorkoutScreen(ExerciseCategoryScreen):
+    selected_toughness = StringProperty("Easy")
+
+    def set_toughness(self, toughness):
+        self.selected_toughness = toughness
+        print(f"Toughness set to {self.selected_toughness}")
+
 
 # ✅ Register Screens in Factory
 Factory.register("ClickableCard", cls=ClickableCard)
@@ -278,6 +324,8 @@ class MainApp(MDApp):
         self.sm.add_widget(HomeScreen(name="home"))
         self.sm.add_widget(SavedScreen(name="saved"))
         self.sm.add_widget(UserScreen(name="user"))
+        self.sm.add_widget(AddWorkoutScreen(name="add_workout"))
+
 
         # ✅ Add screens for each workout category
         self.sm.add_widget(WithEquipmentScreen(name="with_equipment"))
@@ -393,6 +441,19 @@ class MainApp(MDApp):
             return 0.6, 0.4, 1, 1  # Selected color (Purple)
         return 0.95, 0.92, 1, 1  # Default color (Light Purple)
 
+    def logout_user(self):
+        """Logs out the user by deleting the stored token and redirecting to login screen."""
+        try:
+            if os.path.exists("auth_token.json"):
+                os.remove("auth_token.json")  # ✅ Delete stored auth token
+                print("✅ Logged out successfully.")
+            else:
+                print("⚠️ No authentication token found.")
+
+            self.switch_to_login()  # ✅ Redirect user to login screen
+        except Exception as e:
+            print(f"🚨 ERROR during logout: {e}")
+
     def update_saved_screen(self):
         """Update the saved screen with bookmarked exercises."""
         saved_screen = self.sm.get_screen("saved")
@@ -405,7 +466,7 @@ class MainApp(MDApp):
         exercise_list.clear_widgets()
 
         if not self.saved_exercises:
-            exercise_list.add_widget(OneLineListItem(text="⚠️ No saved exercises yet"))
+            exercise_list.add_widget(OneLineListItem(text="No saved exercises yet :("))
             return
 
         print(f"📌 Updating saved screen with {len(self.saved_exercises)} exercises")
@@ -425,6 +486,39 @@ class MainApp(MDApp):
 
         # ✅ Update saved screen
         self.update_saved_screen()
+
+    def switch_to_add_workout(self):
+        """Switch to AddWorkoutScreen."""
+        self.switch_to_screen("add_workout")
+
+    def submit_workout(self):
+        """Collects form data and sends it to the backend."""
+        screen = self.sm.get_screen("add_workout")
+
+        # ✅ Ensure the tags are retrieved from MDTextField correctly
+        tag_input_widget = screen.ids.workout_tags  # Reference to MDTextField
+        tag_text = tag_input_widget.text.strip()  # Get user input from TextField
+
+        # ✅ Convert the tag input to a **list of strings** (assuming comma-separated input)
+        tags_list = [tag.strip() for tag in tag_text.split(",") if tag.strip()] if tag_text else []
+
+        workout_data = {
+            "name": screen.ids.workout_name.text,
+            "description": screen.ids.workout_description.text,
+            "toughness": screen.selected_toughness,  # ✅ Use selected toughness
+            "tags": tags_list,  # Modify as needed
+            "suggested_reps": int(screen.ids.workout_reps.text) if screen.ids.workout_reps.text.isdigit() else 10
+        }
+
+        print(f"Submitting workout: {workout_data}")
+
+        response = requests.post("http://127.0.0.1:8000/add_exercise/", json=workout_data)
+
+        if response.status_code == 200:
+            print("✅ Workout added successfully!")
+            self.root.current = "home"
+        else:
+            print("❌ Error adding workout:", response.json())
 
 
 if __name__ == "__main__":

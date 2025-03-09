@@ -103,6 +103,20 @@
                         user_font_size: "20sp"
                         pos_hint: {"center_x": 0.5}
                         theme_text_color: "Secondary"
+        MDRaisedButton:
+            text: "Add Workout"
+            md_bg_color: 0.2, 0.7, 0.2, 1  # Green color to indicate adding workout
+            size_hint_x: 0.8
+            pos_hint: {"center_x": 0.5}
+            on_release: app.switch_to_add_workout()  # Navigate to add workout screen
+
+        MDRaisedButton:
+            text: "Logout"
+            md_bg_color: 0.8, 0.1, 0.1, 1  # Red button
+            size_hint_x: 0.8
+            pos_hint: {"center_x": 0.5}
+            on_release: app.logout_user()
+
 
         # Bottom Navigation Section
         MDBottomNavigation:

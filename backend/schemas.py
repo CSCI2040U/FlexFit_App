@@ -1,7 +1,8 @@
 # backend/schemas.py
 from pydantic import BaseModel
 from datetime import date
-from typing import Optional
+from typing import Optional, List
+import json
 
 class UserCreate(BaseModel):
     username: str
@@ -14,7 +15,20 @@ class UserCreate(BaseModel):
     gender: str
     role: Optional[str] = "user"  # Default role is 'user'
 
-from pydantic import BaseModel
+# ✅ Exercise Schema
+class ExerciseSchema(BaseModel):
+    id: Optional[int]
+    name: str
+    description: str
+    toughness: str
+    media_url: Optional[str]
+    tags: List[str]  # Ensure it's a list, JSON field should be converted
+    suggested_reps: Optional[int]
+
+
+class Config:
+    from_attributes = True  # ✅ Updated for Pydantic V2
+
 
 class LoginRequest(BaseModel):
     email: str
