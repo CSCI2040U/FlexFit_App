@@ -20,11 +20,15 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Dependency to get the database session
 def get_db():
-    db = SessionLocal()
     try:
+        db = SessionLocal()
+        print("✅ Database session started.")  # ✅ Debugging log
         yield db
+    except Exception as e:
+        print(f"🚨 Database session error: {e}")  # ✅ Catch session errors
     finally:
         db.close()
+        print("✅ Database session closed.")  # ✅ Confirm session closes
 
 # Create the tables
 def create_db():
@@ -35,7 +39,6 @@ class User(Base):
     __tablename__ = 'users'
     __table_args__ = {'extend_existing': True}  # Add this line to extend the existing table definition
 
-
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     full_name = Column(String)
@@ -44,6 +47,12 @@ class User(Base):
     height = Column(String)  # Using Float for numerical data
     weight = Column(String)  # Using Float for numerical data
     dob = Column(Date)  # Using Date for date of birth
+    gender = Column(String)
+    role = Column(String)
+
+    def __init__(self, **kwargs):
+        print(f"📌 Initializing User: {kwargs}")  # ✅ Debugging
+        super().__init__(**kwargs)
 
 class ExerciseCreate(BaseModel):
     name: str

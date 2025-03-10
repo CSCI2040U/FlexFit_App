@@ -8,8 +8,10 @@ from kivy.properties import StringProperty
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivymd.app import MDApp
+from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.card import MDCard
-from kivymd.uix.list import OneLineListItem, OneLineAvatarListItem, ImageLeftWidget, OneLineAvatarIconListItem, IconRightWidget
+from kivymd.uix.dialog import MDDialog
+from kivymd.uix.list import OneLineListItem, OneLineAvatarListItem, ImageLeftWidget, OneLineAvatarIconListItem, IconRightWidget, IconLeftWidget
 from kivymd.uix.pickers import MDDatePicker
 from kivymd.uix.textfield import MDTextField
 
@@ -50,7 +52,10 @@ def load_token():
 
 # ✅ Base Screen Class for Category-based Exercise Filtering
 class ExerciseCategoryScreen(Screen):
-    category_filter = StringProperty("")
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)  # ✅ Ensures proper inheritance
+        self.category_filter = ""
+    # category_filter = StringProperty("")
     saved_exercises = set()  # ✅ Shared across all screens
 
     def on_pre_enter(self):
@@ -107,17 +112,27 @@ class ExerciseCategoryScreen(Screen):
 
         for exercise in filtered_exercises:
             name = exercise.get("name", "Unknown Exercise")
+            exercise_id = exercise.get("id", "Unknown Exercise")
 
             # ✅ Debugging: Ensure it's being added to the list
-            print(f"🔹 Adding exercise to {self.category_filter}: {name}")
+            print(f"🔹 Adding exercise to {self.category_filter}: {name} (ID: {exercise_id})")
 
             item = OneLineAvatarIconListItem(text=name)
+            item.exercise_id = exercise_id
+
+            edit_button = IconRightWidget(icon = "pencil")
+            edit_button.bind(on_release = lambda btn, ex_id = exercise_id: app.edit_workout(ex_id))
+
+            delete_button = IconRightWidget(icon = "trash-can")
+            delete_button.bind(on_release = lambda btn, ex_id=exercise_id: app.delete_workout(ex_id))
 
             # ✅ Set the correct icon state based on whether the exercise is saved
             icon_name = "bookmark" if name in app.saved_exercises else "bookmark-outline"
-            save_button = IconRightWidget(icon=icon_name)
+            save_button = IconLeftWidget(icon=icon_name)
             save_button.bind(on_release=lambda btn, ex=name: self.toggle_save_exercise(ex, btn))
 
+            item.add_widget(edit_button)
+            item.add_widget(delete_button)
             item.add_widget(save_button)
             exercise_list.add_widget(item)
 
@@ -151,6 +166,9 @@ class ClickableCard(MDCard, ButtonBehavior):
             app.root.current = self.target_screen
 
 class PasswordTextField(MDTextField):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     def on_touch_down(self, touch):
         """Detects click on the eye icon and toggles password visibility"""
         if self.icon_right and self.collide_point(*touch.pos):
@@ -315,6 +333,10 @@ class MainApp(MDApp):
         self.user_info = {"birthdate": None, "gender": None, "height": None, "weight": None}
         self.saved_exercises = set()
 
+    def __getattr__(self, name):
+        print(f"🚨 Unrecognized attribute: {name}")  # ✅ Debugging
+        raise AttributeError(f"'MainApp' object has no attribute '{name}'")
+
     def build(self):
         self.sm = ScreenManager()
         self.sm.add_widget(LandingScreen(name="landing"))
@@ -392,13 +414,47 @@ class MainApp(MDApp):
             print(f"Error opening Google Sign-In popup: {e}")
 
     def complete_user_info(self):
-        """Store user info and go to the dashboard."""
-        screen = self.root.get_screen("user_info")
-        self.user_info["birthdate"] = screen.ids.birthdate.text
-        self.user_info["height"] = screen.ids.height.text
-        self.user_info["weight"] = screen.ids.weight.text
-        print(f"User Info Saved: {self.user_info}")
-        self.switch_to_home()  # Proceed to Dashboard
+        """Collects all sign-up details and completes user registration."""
+        user_info_screen = self.root.get_screen("user_info")
+        signup_screen = self.root.get_screen("signup")
+
+        # ✅ Get user details from user_info_screen
+        birthdate_text = user_info_screen.ids.birthdate.text.strip()
+        formatted_dob = self.convert_date_format(birthdate_text)  # Convert MM/DD/YYYY → YYYY-MM-DD
+        gender = self.user_info.get("gender", "")  # Get gender selection
+        height = user_info_screen.ids.height.text.strip()
+        weight = user_info_screen.ids.weight.text.strip()
+
+        # ✅ Get user details from signup_screen
+        username = signup_screen.ids.signup_username.text.strip()
+        full_name = signup_screen.ids.signup_full_name.text.strip()
+        email = signup_screen.ids.signup_email.text.strip()
+        password = signup_screen.ids.signup_password.text.strip()
+
+        # ✅ Merge all details into one dictionary
+        user_data = {
+            "username": username,
+            "full_name": full_name,
+            "email": email,
+            "password": password,
+            "dob": formatted_dob,
+            "gender": gender,
+            "height": height,
+            "weight": weight,
+            "role": "user"
+        }
+
+
+        print(f"📌 Final Signup Data: {user_data}")  # ✅ Debugging
+
+        # ✅ Send request to backend
+        response = requests.post("http://127.0.0.1:8000/signup/", json=user_data)
+
+        if response.status_code == 200:
+            print("✅ User registered successfully!")
+            self.root.current = "login"  # ✅ Redirect to login screen
+        else:
+            print(f"❌ Signup Error: {response.json()}")  # ✅ Show exact error message
 
     def open_date_picker(self):
         """Safely opens the date picker without crashing."""
@@ -423,6 +479,17 @@ class MainApp(MDApp):
     def close_date_picker(self, instance, value):
         """Handles when the user cancels the date picker to prevent crashes."""
         print("Date picker closed without selection.")
+
+    def convert_date_format(self, date_str):
+        """Converts MM/DD/YYYY to YYYY-MM-DD format."""
+        from datetime import datetime
+
+        try:
+            date_obj = datetime.strptime(date_str, "%m/%d/%Y")  # ✅ Convert input format
+            return date_obj.strftime("%Y-%m-%d")  # ✅ Return formatted date
+        except ValueError:
+            print("🚨 ERROR: Invalid date format!")  # ✅ Debugging
+            return ""
 
     def select_gender(self, gender):
         """Store selected gender and update UI colors."""
@@ -453,6 +520,73 @@ class MainApp(MDApp):
             self.switch_to_login()  # ✅ Redirect user to login screen
         except Exception as e:
             print(f"🚨 ERROR during logout: {e}")
+
+    def edit_workout(self, exercise_id):
+        self.dialog = MDDialog(
+            title="Edit Workout",
+            type="custom",
+            content_cls = MDTextField(hint_text="Enter New Workout Name"),
+            buttons=[
+                MDRaisedButton(
+                    text="Save",
+                    on_release=lambda _: self.confirm_edit_workout(exercise_id)
+                ),
+                MDRaisedButton(
+                    text="Cancel",
+                    on_release=lambda _: self.dialog.dismiss()
+                )
+            ]
+        )
+        self.dialog.open()
+
+    def confirm_edit_workout(self, exercise_id):
+        new_name = self.dialog.content_cls.text.strip()
+        if not new_name:
+            print("❌ Workout name cannot be empty!")
+            return
+
+        url = f"http://127.0.0.1:8000/edit_exercise/{exercise_id}"
+        response = requests.put(url, json={"name": new_name})
+
+        if response.status_code == 200:
+            print(f"✅ Workout {exercise_id} updated successfully!")
+            self.refresh_exercises()
+        else:
+            print(f"❌ Error updating Workout {response.json()}!")
+
+        self.dialog.dismiss()
+
+    def delete_workout(self, exercise_id):
+        """Confirms and deletes the exercise."""
+        from kivymd.uix.dialog import MDDialog
+
+        def confirm_delete(instance):
+            url = f"http://127.0.0.1:8000/delete_exercise/{exercise_id}"
+            response = requests.delete(url)
+            if response.status_code == 200:
+                print(f"✅ Workout {exercise_id} deleted successfully!")
+                self.refresh_exercises()
+            else:
+                print(f"❌ Error deleting workout: {response.json()}")
+            dialog.dismiss()
+
+        dialog = MDDialog(
+            title="Delete Workout",
+            text="Are you sure you want to delete this workout?",
+            buttons=[
+                MDRaisedButton(text="Yes", on_release=confirm_delete),
+                MDRaisedButton(text="No", on_release=lambda _: dialog.dismiss())
+            ]
+        )
+        dialog.open()
+
+    def refresh_exercises(self):
+        """Reloads the exercises list after changes."""
+        current_screen = self.root.current_screen
+        if hasattr(current_screen, "load_exercises"):
+            current_screen.load_exercises()
+        else:
+            print("❌ ERROR: Current screen doesn't support exercise loading.")
 
     def update_saved_screen(self):
         """Update the saved screen with bookmarked exercises."""
@@ -490,6 +624,7 @@ class MainApp(MDApp):
     def switch_to_add_workout(self):
         """Switch to AddWorkoutScreen."""
         self.switch_to_screen("add_workout")
+
 
     def submit_workout(self):
         """Collects form data and sends it to the backend."""

@@ -8,6 +8,7 @@ import jwt
 import json
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
+from backend.routes.auth import router as auth_router  # Import the auth router
 
 # FastAPI app initialization
 app = FastAPI()
@@ -39,7 +40,6 @@ def verify_access_token(token: str):
 
 
 # Include routes for authentication
-from backend.routes.auth import router as auth_router  # Import the auth router
 
 app.include_router(auth_router, prefix="/auth")
 
@@ -53,7 +53,6 @@ def get_db():
         yield db
     finally:
         db.close()
-
 
 @app.post("/add_exercise/")
 def add_exercise(exercise: dict, db: Session = Depends(get_db)):
@@ -115,40 +114,46 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.post("/signup/")
-def signup(user_info: dict, db: Session = Depends(get_db)):
-    # Ensure that all necessary fields are provided
-    required_fields = ["username", "email", "password", "role", "full_name", "dob", "gender", "height", "weight"]
-    for field in required_fields:
-        if field not in user_info:
-            raise HTTPException(status_code=400, detail=f"{field} is required")
+def signup(user_info: UserCreate, db: Session = Depends(get_db)):
+    """Handles user registration and adds a new user to the database."""
+    try:
+        print(f"📌 Received Sign-Up Data: {user_info}")  # Debugging
 
-    # Check if the user already exists
-    existing_user = db.query(User).filter(User.email == user_info['email']).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        # Check if the email is already registered
+        existing_user = db.query(User).filter(User.email == user_info.email).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Email already registered")
 
-    # Hash the password before saving it
-    hashed_password = generate_password_hash(user_info['password'], method='pbkdf2:sha256')
+        # Hash the password
+        hashed_password = generate_password_hash(user_info.password, method='pbkdf2:sha256')
 
-    # Create a new user object with all the fields
-    new_user = User(
-        username=user_info['username'],
-        full_name=user_info['full_name'],
-        email=user_info['email'],
-        password_hash=hashed_password,
-        dob=user_info['dob'],
-        gender=user_info['gender'],
-        height=user_info['height'],
-        weight=user_info['weight'],
-        role=user_info['role']
-    )
+        # ✅ Convert dob from string to date (Already handled in Pydantic model)
+        parsed_dob = user_info.dob
 
-    # Save the new user to the database
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
 
-    return {"message": "User created successfully", "user_id": new_user.id}
+        # ✅ Create new user
+        new_user = User(
+            username=user_info.username,
+            full_name=user_info.full_name,
+            email=user_info.email,
+            password_hash=hashed_password,
+            dob=parsed_dob,
+            gender=user_info.gender,
+            height=user_info.height,
+            weight=user_info.weight,
+            role=user_info.role
+        )
+
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+
+        print(f"✅ Successfully Created User: {new_user.email}")
+        return {"message": "User created successfully", "user_id": new_user.id}
+
+    except Exception as e:
+        print(f"🚨 ERROR: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Protected route that requires JWT token
 @app.get("/protected/")

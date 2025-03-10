@@ -1,6 +1,7 @@
 # backend/schemas.py
-from pydantic import BaseModel
-from datetime import date
+
+from pydantic import BaseModel, field_validator
+from datetime import datetime
 from typing import Optional, List
 import json
 
@@ -9,11 +10,19 @@ class UserCreate(BaseModel):
     full_name: str
     email: str
     password: str
-    dob: date
+    dob: str
     weight: int
     height: int
     gender: str
     role: Optional[str] = "user"  # Default role is 'user'
+
+    @field_validator("dob")
+    def parse_dob(cls, v):
+        """Converts 'YYYY-MM-DD' string to a date object before storing."""
+        try:
+            return datetime.strptime(v, "%Y-%m-%d").date()
+        except ValueError:
+            raise ValueError("Invalid date format. Expected YYYY-MM-DD.")
 
 # ✅ Exercise Schema
 class ExerciseSchema(BaseModel):
