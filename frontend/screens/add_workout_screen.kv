@@ -67,11 +67,23 @@
             size_hint_x: 0.9
             pos_hint: {"center_x": 0.5}
 
+        MDLabel:
+            text: "Workout Reps"
+            font_style: "Subtitle2"
+            halign: "center"
+
+        MDTextField:
+            id: workout_reps
+            mode: "rectangle"
+            size_hint_x: 0.9
+            pos_hint: {"center_x": 0.5}
+
         MDRaisedButton:
             text: "Submit Workout"
             size_hint_x: 0.9
             pos_hint: {"center_x": 0.5}
             on_release: app.submit_workout()
+
 
         MDLabel:
             text: "[ref=user][b]Go back[/b][/ref]"

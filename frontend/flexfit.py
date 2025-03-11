@@ -1,6 +1,7 @@
 import json
 import os
 import requests
+from datetime import datetime
 from kivy.clock import Clock
 from kivy.factory import Factory
 from kivy.lang import Builder
@@ -55,7 +56,7 @@ class ExerciseCategoryScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)  # ✅ Ensures proper inheritance
         self.category_filter = ""
-    # category_filter = StringProperty("")
+    category_filter = StringProperty("")
     saved_exercises = set()  # ✅ Shared across all screens
 
     def on_pre_enter(self):
@@ -68,7 +69,7 @@ class ExerciseCategoryScreen(Screen):
         exercise_list = self.ids.get("exercise_list", None)
 
         if not exercise_list:
-            print("🚨 ERROR: 'exercise_list' ID not found in with_equipment.kv!")
+            # print("🚨 ERROR: 'exercise_list' ID not found in with_equipment.kv!")
             return
 
         exercise_list.clear_widgets()
@@ -334,8 +335,8 @@ class MainApp(MDApp):
         self.saved_exercises = set()
 
     def __getattr__(self, name):
-        print(f"🚨 Unrecognized attribute: {name}")  # ✅ Debugging
-        raise AttributeError(f"'MainApp' object has no attribute '{name}'")
+        print(f"🚨 Attempted to access: {name}")  # Debugging
+        return super().__getattr__(name)
 
     def build(self):
         self.sm = ScreenManager()
@@ -413,6 +414,56 @@ class MainApp(MDApp):
         except Exception as e:
             print(f"Error opening Google Sign-In popup: {e}")
 
+    def open_date_picker(self):
+        """Safely opens the date picker without crashing."""
+        try:
+            date_dialog = MDDatePicker()  # No 'callback' argument
+            date_dialog.bind(on_save=self.set_birthdate, on_cancel=self.close_date_picker)
+            date_dialog.open()
+        except Exception as e:
+            print(f"Error opening date picker: {e}")  # Debugging in case of crashes
+
+    def set_birthdate(self, instance, value, date_range):
+        """Set the selected date in the birthdate field and update UI."""
+        try:
+            screen = self.root.get_screen("user_info")
+            birthdate = screen.ids.birthdate
+            birthdate.text = value.strftime("%m/%d/%Y")  # Update UI immediately
+            birthdate.focus = True  # Forces Kivy to recognize the update
+            birthdate.focus = False  # Ensures it refreshes properly
+        except Exception as e:
+            print(f"Error updating birthdate UI: {e}")  # Debugging if needed
+
+    def close_date_picker(self, instance, value):
+        """Handles when the user cancels the date picker to prevent crashes."""
+        print("Date picker closed without selection.")
+
+    def convert_date_format(self, date_str):
+        """Converts MM/DD/YYYY to YYYY-MM-DD format."""
+        try:
+            date_obj = datetime.strptime(date_str, "%m/%d/%Y")  # ✅ Convert input format
+            return date_obj.strftime("%Y-%m-%d")  # ✅ Return formatted date
+        except ValueError:
+            print("🚨 ERROR: Invalid date format!")  # ✅ Debugging
+            return ""
+
+    def select_gender(self, gender):
+        """Store selected gender and update UI colors."""
+        self.user_info["gender"] = gender
+
+        # Debugging: Check if gender is set correctly
+        print(f"Gender Selected: {self.user_info['gender']}")
+
+        user_info_screen = self.root.get_screen("user_info")
+        user_info_screen.ids.male_card.md_bg_color = self.get_gender_color("male")
+        user_info_screen.ids.female_card.md_bg_color = self.get_gender_color("female")
+
+    def get_gender_color(self, gender):
+        """Returns the color for the selected gender card."""
+        if self.user_info.get("gender") == gender:
+            return 0.6, 0.4, 1, 1  # Selected color (Purple)
+        return 0.95, 0.92, 1, 1  # Default color (Light Purple)
+
     def complete_user_info(self):
         """Collects all sign-up details and completes user registration."""
         user_info_screen = self.root.get_screen("user_info")
@@ -427,7 +478,7 @@ class MainApp(MDApp):
 
         # ✅ Get user details from signup_screen
         username = signup_screen.ids.signup_username.text.strip()
-        full_name = signup_screen.ids.signup_full_name.text.strip()
+        full_name = signup_screen.ids.signup_name.text.strip()
         email = signup_screen.ids.signup_email.text.strip()
         password = signup_screen.ids.signup_password.text.strip()
 
@@ -456,57 +507,6 @@ class MainApp(MDApp):
         else:
             print(f"❌ Signup Error: {response.json()}")  # ✅ Show exact error message
 
-    def open_date_picker(self):
-        """Safely opens the date picker without crashing."""
-        try:
-            date_dialog = MDDatePicker()  # No 'callback' argument
-            date_dialog.bind(on_save=self.set_birthdate, on_cancel=self.close_date_picker)
-            date_dialog.open()
-        except Exception as e:
-            print(f"Error opening date picker: {e}")  # Debugging in case of crashes
-
-    def set_birthdate(self, instance, value, date_range):
-        """Set the selected date in the birthdate field and update UI."""
-        try:
-            screen = self.root.get_screen("user_info")
-            birthdate_field = screen.ids.birthdate
-            birthdate_field.text = value.strftime("%m/%d/%Y")  # Update UI immediately
-            birthdate_field.focus = True  # Forces Kivy to recognize the update
-            birthdate_field.focus = False  # Ensures it refreshes properly
-        except Exception as e:
-            print(f"Error updating birthdate UI: {e}")  # Debugging if needed
-
-    def close_date_picker(self, instance, value):
-        """Handles when the user cancels the date picker to prevent crashes."""
-        print("Date picker closed without selection.")
-
-    def convert_date_format(self, date_str):
-        """Converts MM/DD/YYYY to YYYY-MM-DD format."""
-        from datetime import datetime
-
-        try:
-            date_obj = datetime.strptime(date_str, "%m/%d/%Y")  # ✅ Convert input format
-            return date_obj.strftime("%Y-%m-%d")  # ✅ Return formatted date
-        except ValueError:
-            print("🚨 ERROR: Invalid date format!")  # ✅ Debugging
-            return ""
-
-    def select_gender(self, gender):
-        """Store selected gender and update UI colors."""
-        self.user_info["gender"] = gender
-
-        # Debugging: Check if gender is set correctly
-        print(f"Gender Selected: {self.user_info['gender']}")
-
-        user_info_screen = self.root.get_screen("user_info")
-        user_info_screen.ids.male_card.md_bg_color = self.get_gender_color("male")
-        user_info_screen.ids.female_card.md_bg_color = self.get_gender_color("female")
-
-    def get_gender_color(self, gender):
-        """Returns the color for the selected gender card."""
-        if self.user_info.get("gender") == gender:
-            return 0.6, 0.4, 1, 1  # Selected color (Purple)
-        return 0.95, 0.92, 1, 1  # Default color (Light Purple)
 
     def logout_user(self):
         """Logs out the user by deleting the stored token and redirecting to login screen."""
@@ -625,39 +625,39 @@ class MainApp(MDApp):
         """Switch to AddWorkoutScreen."""
         self.switch_to_screen("add_workout")
 
-
     def submit_workout(self):
-        """Collects form data and sends it to the backend."""
         screen = self.sm.get_screen("add_workout")
 
-        # ✅ Ensure the tags are retrieved from MDTextField correctly
-        tag_input_widget = screen.ids.workout_tags  # Reference to MDTextField
-        tag_text = tag_input_widget.text.strip()  # Get user input from TextField
+        tag_input_widget = screen.ids.workout_tags
+        tag_text = tag_input_widget.text.strip()
 
-        # ✅ Convert the tag input to a **list of strings** (assuming comma-separated input)
         tags_list = [tag.strip() for tag in tag_text.split(",") if tag.strip()] if tag_text else []
 
         workout_data = {
             "name": screen.ids.workout_name.text,
             "description": screen.ids.workout_description.text,
-            "toughness": screen.selected_toughness,  # ✅ Use selected toughness
-            "tags": tags_list,  # Modify as needed
+            "toughness": screen.selected_toughness,
+            "tags": tags_list,
             "suggested_reps": int(screen.ids.workout_reps.text) if screen.ids.workout_reps.text.isdigit() else 10
         }
 
-        print(f"Submitting workout: {workout_data}")
+        print(f"📤 Submitting workout: {workout_data}")  # ✅ Print the request payload
 
         response = requests.post("http://127.0.0.1:8000/add_exercise/", json=workout_data)
 
+        print(f"📥 API Response: {response.status_code}, {response.text}")  # ✅ Print the API response
+
         if response.status_code == 200:
             print("✅ Workout added successfully!")
-            self.root.current = "home"
+            self.root.current = "user"
         else:
-            print("❌ Error adding workout:", response.json())
+            print(f"❌ Error adding workout: {response.json()}")  # ✅ Print the error message
 
 
 if __name__ == "__main__":
     try:
         MainApp().run()
+    except AttributeError as e:
+        print(f"🚨 AttributeError: {e}")
     except Exception as e:
         print(f"🚨 ERROR: {e}")
