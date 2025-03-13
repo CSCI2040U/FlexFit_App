@@ -1,28 +1,74 @@
-<ExerciseScreen>:
-    name: root.exercise_name
+<ExerciseDetailScreen>:
+    name: "exercise_detail"
 
     BoxLayout:
-        orientation: 'vertical'
-        padding: dp(10)
-        spacing: dp(10)
+        orientation: "vertical"
+        padding: 10
+        spacing: 10
+        canvas.before:
+            Color:
+                rgba: 1, 1, 1, 1  # ✅ Ensure background is white
+            Rectangle:
+                pos: self.pos
+                size: self.size
 
         AsyncImage:
-            source: root.exercise_image
-            id: exercise_image
-            size_hint_y: 0.5
-            allow_stretch: True
+            source: root.exercise_image_url
+            size_hint: (1, 1)
 
         MDLabel:
             text: root.exercise_name
             font_style: "H5"
             halign: "center"
+            theme_text_color: "Custom"
+            text_color: 0, 0, 0, 1  # ✅ Black text
 
         MDLabel:
-            text: root.exercise_description  # ✅ Fixed this line
+            text: "Description: " + root.exercise_description
             font_style: "Body1"
             halign: "center"
+            theme_text_color: "Custom"
+            text_color: 0, 0, 0, 1
 
-        MDRaisedButton:
-            text: "Back"
+        MDLabel:
+            text: "Tags: " + root.exercise_tags
+            font_style: "Body1"
+            halign: "center"
+            theme_text_color: "Custom"
+            text_color: 0, 0, 0, 1  # ✅ Ensure visibility
+
+        MDLabel:
+            text: "Suggested Reps: " + root.exercise_reps
+            font_style: "Body1"
+            halign: "center"
+            theme_text_color: "Custom"
+            text_color: 0, 0, 0, 1
+
+        MDLabel:
+            text: "Toughness: " + root.exercise_toughness
+            font_style: "Body1"
+            halign: "center"
+            theme_text_color: "Custom"
+            text_color: 0, 0, 0, 1
+
+        MDBoxLayout:
+            orientation: 'vertical'
+            padding: dp(10)
+            spacing: dp(10)
+            size_hint_y: None
+            height: dp(120)
             pos_hint: {"center_x": 0.5}
-            on_release: app.switch_to_screen("home")
+
+            MDRaisedButton:
+                text: "Delete Workout"
+                md_bg_color: 0.8, 0.1, 0.1, 1
+                size_hint_x: 0.8
+                pos_hint: {"center_x": 0.5}
+                on_release: app.delete_exercise(root.exercise_id)
+
+            MDRaisedButton:
+                text: "Go Back"
+                md_bg_color: 0.2, 0.7, 0.2, 1
+                size_hint_x: 0.8
+                pos_hint: {"center_x": 0.5}
+                on_release: app.switch_to_home()

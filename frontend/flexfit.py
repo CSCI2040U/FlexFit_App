@@ -7,13 +7,21 @@ from kivy.factory import Factory
 from kivy.lang import Builder
 from kivy.properties import StringProperty
 from kivy.uix.behaviors import ButtonBehavior
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.image import AsyncImage
+from kivy.uix.label import Label
 from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.scrollview import ScrollView
 from kivymd.app import MDApp
-from kivymd.uix.button import MDRaisedButton
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.button import MDRaisedButton, MDFlatButton
 from kivymd.uix.card import MDCard
 from kivymd.uix.dialog import MDDialog
-from kivymd.uix.list import OneLineListItem, OneLineAvatarListItem, ImageLeftWidget, OneLineAvatarIconListItem, IconRightWidget, IconLeftWidget
+from kivymd.uix.gridlayout import MDGridLayout
+from kivymd.uix.list import OneLineListItem, OneLineAvatarListItem, ImageLeftWidget, OneLineAvatarIconListItem, \
+    IconRightWidget, IconLeftWidget, MDList
 from kivymd.uix.pickers import MDDatePicker
+from kivymd.uix.selectioncontrol import MDCheckbox
 from kivymd.uix.textfield import MDTextField
 
 from frontend.test import LoginScreen
@@ -121,11 +129,13 @@ class ExerciseCategoryScreen(Screen):
             item = OneLineAvatarIconListItem(text=name)
             item.exercise_id = exercise_id
 
+            item.bind(on_release=lambda btn, ex_id=exercise_id: self.on_exercise_click(ex_id))
+
             edit_button = IconRightWidget(icon = "pencil")
             edit_button.bind(on_release = lambda btn, ex_id = exercise_id: app.edit_workout(ex_id))
 
             delete_button = IconRightWidget(icon = "trash-can")
-            delete_button.bind(on_release = lambda btn, ex_id=exercise_id: app.delete_workout(ex_id))
+            delete_button.bind(on_release = lambda btn, ex_id=exercise_id: app.delete_exercise(ex_id))
 
             # ✅ Set the correct icon state based on whether the exercise is saved
             icon_name = "bookmark" if name in app.saved_exercises else "bookmark-outline"
@@ -139,6 +149,11 @@ class ExerciseCategoryScreen(Screen):
 
     def on_search(self, instance, search_text = ""):
         self.load_exercises(search_query = search_text)
+
+    def on_exercise_click(self, exercise_id):
+        """Handles clicking on an exercise to navigate to the detail screen."""
+        app = MDApp.get_running_app()
+        app.show_exercise(exercise_id)
 
     def toggle_save_exercise(self, exercise_name, save_button):
         """Bookmark or remove an exercise from saved workouts and update icon."""
@@ -301,6 +316,152 @@ class AddWorkoutScreen(ExerciseCategoryScreen):
         self.selected_toughness = toughness
         print(f"Toughness set to {self.selected_toughness}")
 
+class ExerciseDetailScreen(Screen):
+    exercise_id = StringProperty("")
+    exercise_name = StringProperty("")
+    exercise_description = StringProperty("")
+    exercise_tags = StringProperty("")
+    exercise_reps = StringProperty("")
+    exercise_toughness = StringProperty("")
+    exercise_image_url = StringProperty("")
+
+    def display_exercise(self, exercise_id):
+        """Fetch and display exercise details from the backend."""
+        self.exercise_id = str(exercise_id)
+        BASE_URL = "http://127.0.0.1:8000"
+        response = requests.get(f"{BASE_URL}/exercise/{exercise_id}")
+
+        if response.status_code == 200:
+            exercise_data = response.json()
+            print(f"📄 API Response: {exercise_data}")
+
+            # ✅ Since FastAPI now returns a list, join it properly
+            self.exercise_tags = ", ".join(exercise_data.get("tags", [])) if exercise_data.get(
+                "tags") else "No tags available"
+
+            self.exercise_name = exercise_data.get("name", "Unknown Exercise")
+            self.exercise_description = exercise_data.get("description", "No description available.")
+            self.exercise_reps = str(exercise_data.get("suggested_reps", "N/A"))
+            self.exercise_toughness = exercise_data.get("toughness", "Unknown")
+            self.exercise_image_url = exercise_data.get("image_url", "")
+
+            Clock.schedule_once(lambda dt: self.property_refresh(), 0)
+
+        else:
+            print(f"❌ ERROR: Failed to fetch exercise. Status {response.status_code}")
+            print(f"⚠️ API Error Message: {response.text}")
+
+    def property_refresh(self):
+        """Manually refresh properties to update UI."""
+        self.property("exercise_name").dispatch(self)
+        self.property("exercise_description").dispatch(self)
+        self.property("exercise_tags").dispatch(self)
+        self.property("exercise_reps").dispatch(self)
+        self.property("exercise_toughness").dispatch(self)
+        self.property("exercise_image_url").dispatch(self)
+
+class FilterDialogContent(MDBoxLayout):
+    pass
+
+class AllWorkoutsScreen(Screen):
+    def on_pre_enter(self):
+        """Load all workouts initially."""
+        Clock.schedule_once(lambda dt: self.load_workouts(""), 0.1)
+
+    def load_workouts(self, search_query=""):
+        """Fetch workouts dynamically based on search input."""
+        search_query = search_query.strip().lower()
+        workouts = ExerciseAPI.fetch_exercises()  # ✅ Fetch all exercises from API
+
+        if not workouts:
+            print("⚠️ No workouts found from API")
+            self.display_workouts([])
+            return
+
+        # ✅ Only filter on API response (no in-memory storage)
+        filtered_workouts = [
+            workout for workout in workouts if search_query in workout["name"].lower()
+        ]
+
+        self.display_workouts(filtered_workouts)
+
+    def display_workouts(self, workouts):
+        """Update the UI with workout list."""
+        all_workouts_list = self.ids.get("all_workouts_list", None)
+
+        if not all_workouts_list:
+            print("🚨 ERROR: 'all_workouts_list' ID not found in all_workouts_screen.kv!")
+            return
+
+        all_workouts_list.clear_widgets()  # ✅ Clear previous results
+
+        if not workouts:
+            all_workouts_list.add_widget(OneLineListItem(text="⚠️ No workouts found"))
+            return
+
+        app = MDApp.get_running_app()
+
+        for workout in workouts:
+            name = workout.get("name", "Unknown Workout")
+            workout_id = workout.get("id", "Unknown ID")
+
+            item = OneLineAvatarIconListItem(text=name)
+            item.workout_id = workout_id
+
+            view_button = IconRightWidget(icon="eye")
+            view_button.bind(on_release=lambda btn, ex_id=workout_id: app.show_exercise(ex_id))
+
+            delete_button = IconRightWidget(icon="trash-can")
+            delete_button.bind(on_release=lambda btn, ex_id=workout_id: app.delete_exercise(ex_id))
+
+            item.add_widget(view_button)
+            item.add_widget(delete_button)
+            all_workouts_list.add_widget(item)
+
+    def on_search(self, instance, *args):
+        """Fetch workouts dynamically based on user input."""
+        search_text = instance.text.strip()  # ✅ Extract text properly
+        Clock.schedule_once(lambda dt: self.load_workouts(search_text), 0.1)  # ✅ Debounce search
+
+    def open_filter_dialog(self):
+        dialog = self.ids.filter_dialog
+        filter_grid = dialog.content_cls.filter_grid
+        filter_options = ["With Equipment", "Without Equipment", "Outdoor", "Wellness"]
+
+        if not hasattr(self, "selected_filters"):
+            self.selected_filters = set()
+
+        filter_grid.clear_widgets()
+
+        for option in filter_options:
+            default_color = (0.2,0.6,1,1)
+
+            button = MDRaisedButton(
+                text = option,
+                size_hint_x = 0.5,
+                mb_bg_color = default_color,
+                on_release = lambda btn, opt=option: self.toggle_filter(btn, opt)
+            )
+
+            filter_grid.add_widget(button)
+        dialog.open()
+
+    def toggle_filter(self, button, option):
+        """Toggle filter selection and update button color."""
+        if option in self.selected_filters:
+            self.selected_filters.remove(option)
+            button.md_bg_color = (0.8, 0.8, 0.8, 1)  # Gray (unselected)
+        else:
+            self.selected_filters.add(option)
+            button.md_bg_color = (0.2, 0.6, 1, 1)  # Blue (selected)
+
+    def apply_filter(self):
+        """Apply selected filters and close the dialog."""
+        if self.selected_filters:
+            filter_query = ",".join(self.selected_filters).lower()
+            self.load_workouts(filter_query)
+        self.ids.filter_dialog.dismiss()
+
 
 # ✅ Register Screens in Factory
 Factory.register("ClickableCard", cls=ClickableCard)
@@ -319,6 +480,7 @@ Factory.register("WithoutEquipmentScreen", cls=WithoutEquipmentScreen)
 Factory.register("OutdoorScreen", cls=OutdoorScreen)
 Factory.register("WellnessScreen", cls=WellnessScreen)
 
+Factory.register(ExerciseDetailScreen, cls=ExerciseDetailScreen)
 # ✅ Load all KV Files Dynamically
 KV_DIR = "screens"
 for file in os.listdir(KV_DIR):
@@ -355,6 +517,9 @@ class MainApp(MDApp):
         self.sm.add_widget(WithoutEquipmentScreen(name="without_equipment"))
         self.sm.add_widget(OutdoorScreen(name="outdoor"))
         self.sm.add_widget(WellnessScreen(name="wellness"))
+
+        self.sm.add_widget(ExerciseDetailScreen(name="exercise_detail"))
+        self.sm.add_widget(AllWorkoutsScreen(name="all_workouts"))
 
         return self.sm
 
@@ -400,6 +565,11 @@ class MainApp(MDApp):
     def open_category(self, category):
         print(f"Opening {category} Workouts!")
         self.switch_to_screen(category)
+
+    def show_exercise(self, exercise_id):
+        screen = self.root.get_screen("exercise_detail")
+        screen.display_exercise(exercise_id)
+        self.root.current = "exercise_detail"
 
     def google_sign_in(self):
     # """Show a popup to simulate Google Sign-In."""
@@ -556,28 +726,34 @@ class MainApp(MDApp):
 
         self.dialog.dismiss()
 
-    def delete_workout(self, exercise_id):
+    def delete_exercise(self, exercise_id):
         """Confirms and deletes the exercise."""
-        from kivymd.uix.dialog import MDDialog
+        print(f"🚨 Function Reference Check: delete_exercise = {self.delete_exercise}")
 
+        # ✅ Define confirm_delete AFTER dialog
         def confirm_delete(instance):
-            url = f"http://127.0.0.1:8000/delete_exercise/{exercise_id}"
+            print(f"📌 Attempting to delete exercise with ID: {exercise_id}")
+            url = f"http://127.0.0.1:8000/api/exercises/{exercise_id}"
             response = requests.delete(url)
+
             if response.status_code == 200:
-                print(f"✅ Workout {exercise_id} deleted successfully!")
+                print(f"✅ Exercise {exercise_id} deleted successfully!")
                 self.refresh_exercises()
             else:
-                print(f"❌ Error deleting workout: {response.json()}")
-            dialog.dismiss()
+                print(f"❌ Error deleting exercise: {response.json()}")
 
+            dialog.dismiss()  # ✅ Ensure dialog is correctly defined before calling dismiss()
+
+        # ✅ Define dialog BEFORE calling confirm_delete
         dialog = MDDialog(
-            title="Delete Workout",
-            text="Are you sure you want to delete this workout?",
+            title="Delete Exercise",
+            text="Are you sure you want to delete this exercise?",
             buttons=[
-                MDRaisedButton(text="Yes", on_release=confirm_delete),
-                MDRaisedButton(text="No", on_release=lambda _: dialog.dismiss())
+                MDRaisedButton(text="Yes", on_release=lambda _: confirm_delete(None)),  # ✅ Proper lambda
+                MDRaisedButton(text="No", on_release=lambda _: dialog.dismiss())  # ✅ Ensures dialog exists
             ]
         )
+
         dialog.open()
 
     def refresh_exercises(self):

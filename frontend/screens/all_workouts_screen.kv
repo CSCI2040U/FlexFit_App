@@ -1,0 +1,67 @@
+<AllWorkoutsScreen>:
+    name: "all_workouts"
+
+    BoxLayout:
+        orientation: "vertical"
+        padding: dp(10)
+        spacing: dp(10)
+
+        MDBoxLayout:
+            size_hint_y: None
+            height: dp(50)
+            padding: dp(10)
+            spacing: dp(10)
+            adaptive_height: True
+
+            # ✅ Back Button (Icon)
+            MDIconButton:
+                icon: "arrow-left"
+                theme_icon_color: "Custom"
+                icon_color: 0, 0, 0, 1
+                on_release: app.switch_to_home()
+
+            # ✅ Search Bar
+            MDTextField:
+                id: search_field
+                hint_text: "Search workouts..."
+                mode: "rectangle"
+                size_hint_x: 0.75
+                on_text: root.on_search(self)
+
+            # ✅ Filter Button
+            MDIconButton:
+                icon: "filter-variant"
+                theme_icon_color: "Custom"
+                icon_color: 0, 0, 0, 1
+                on_release: root.open_filter_dialog()
+
+        ScrollView:
+            MDList:
+                id: all_workouts_list
+
+# ✅ Move the MDDialog outside AllWorkoutsScreen to avoid indentation issues
+<FilterDialogContent>:
+    orientation: "vertical"
+    spacing: dp(10)
+    padding: dp(10)
+
+    MDGridLayout:
+        id: filter_grid
+        cols: 2
+        spacing: dp(10)
+        adaptive_height: True
+
+    MDBoxLayout:
+        orientation: "horizontal"
+        spacing: dp(10)
+        size_hint_y: None
+        height: dp(50)
+
+        MDRaisedButton:
+            text: "Apply"
+            md_bg_color: 0.2, 0.6, 1, 1
+            on_release: app.apply_filter()
+
+        MDRaisedButton:
+            text: "Cancel"
+            on_release: app.dismiss_filter_dialog()

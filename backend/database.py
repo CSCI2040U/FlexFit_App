@@ -65,10 +65,23 @@ class ExerciseCreate(BaseModel):
     class Config:
         from_attributes = True
 
+class Exercise(Base):
+    __tablename__ = "exercises"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    toughness = Column(String, nullable=True)
+    media_url = Column(String, nullable=True)
+    tags = Column(String, nullable=True)  # Stored as JSON string
+    suggested_reps = Column(Integer, nullable=True)
 
 # Fetch user data
 def get_user_data(db, user_id: int):
     return db.query(User).filter(User.id == user_id).first()
+
+def get_exercise_by_id(db: Session, exercise_id: int):
+    return db.query(Exercise).filter(Exercise.id == exercise_id).first()
 
 # Only create tables if this script is run directly
 if __name__ == "__main__":

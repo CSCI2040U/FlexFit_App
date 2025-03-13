@@ -85,6 +85,22 @@
                             halign: "center"
                             size_hint_y: 1/4
 
+                ClickableCard:
+                    radius: dp(10)
+                    md_bg_color: 0.9, 0.9, 1, 1
+                    size_hint_x: 1/2
+                    elevation: 1/2
+                    on_release: app.switch_to_screen("all_workouts")
+                    BoxLayout:
+                        orientation: 'vertical'
+                        AsyncImage:
+                            source: "assets/wellness_workout.jpg"
+                            size_hint_y: 1
+                        MDLabel:
+                            text: "All Workouts"
+                            halign: "center"
+                            size_hint_y: 1/4
+
             MDBottomNavigation:
                 id: bottom_nav
                 panel_color: "#eeeeee"

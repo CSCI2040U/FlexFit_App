@@ -1,7 +1,11 @@
+import traceback
+
 from fastapi import FastAPI, Depends, HTTPException, Query
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from backend.database import SessionLocal, engine, get_user_data, ExerciseCreate
+from backend.database import SessionLocal, engine, get_user_data, ExerciseCreate, get_exercise_by_id
 from backend.models import Base, Exercise, User
+from backend.routes import exercises
 from backend.schemas import UserCreate, LoginRequest
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
@@ -11,8 +15,17 @@ from fastapi.security import OAuth2PasswordBearer
 from backend.routes.auth import router as auth_router  # Import the auth router
 
 # FastAPI app initialization
-app = FastAPI()
-
+app = FastAPI(
+    title="Your API",
+    description="API for managing exercises",
+    version="1.0.0",
+    openapi_tags=[
+        {
+            "name": "Exercise",
+            "description": "Operations related to exercises",
+        }
+    ]
+)
 # Secret key for encoding and decoding JWT tokens
 SECRET_KEY = "your_secret_key"  # Change this to a secure random key
 ALGORITHM = "HS256"
@@ -42,6 +55,8 @@ def verify_access_token(token: str):
 # Include routes for authentication
 
 app.include_router(auth_router, prefix="/auth")
+app.include_router(exercises.router, prefix="/api", tags=["Workouts"])
+
 
 Base.metadata.create_all(bind=engine)  # Creates tables if they don't exist
 
@@ -208,3 +223,48 @@ def get_exercises(
         })
 
     return exercises_list if exercises_list else {"error": "No exercises found"}
+
+
+class ExerciseUpdate(BaseModel):
+    name: str
+
+
+@app.get("/exercise/{exercise_id}")
+def get_exercise(exercise_id: int, db: Session = Depends(get_db)):
+    try:
+        exercise = get_exercise_by_id(db, exercise_id)
+        if not exercise:
+            raise HTTPException(status_code=404, detail="Exercise not found")
+            # return {"error": "Exercise not found"}
+
+        try:
+            tags_list = json.loads(exercise.tags) if exercise.tags else []
+        except json.decoder.JSONDecodeError:
+            tags_list = []
+
+        return {
+            "name": exercise.name,
+            "image_url": exercise.media_url,
+            "description": exercise.description,
+            "tags": tags_list,
+            "suggested_reps": exercise.suggested_reps,
+            "toughness": exercise.toughness
+        }
+    except Exception as e:
+        print(f"❌ Internal Server Error: {e}")
+        print(traceback.format_exc())  # ✅ This will show the full error in logs
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+@app.put("/edit_exercise/{exercise_id}/")
+async def edit_exercise(exercise_id: int, exercise_update: ExerciseUpdate, db: Session = Depends(get_db)):
+    exercise = db.query(Exercise).filter(Exercise.id == exercise_id).first()
+
+    if not exercise:
+        raise HTTPException(status_code=404, detail="Exercise not found")
+
+    exercise.name = exercise_update.name
+    db.commit()
+    db.refresh(exercise)
+
+    return {"message": "Exercise updated successfully", "exercise": {"id": exercise.id, "name": exercise.name}}
