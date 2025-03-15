@@ -227,7 +227,19 @@ def get_exercises(
 
 class ExerciseUpdate(BaseModel):
     name: str
+    # description: str
+    # toughness: str
+    # media_url: str
+    # tags: str
+    # suggested_reps: int
 
+# class UserUpdate(BaseModel):
+#     # username: str
+#     # full_name: str
+#     # email: str
+#     # password: str
+#     # height: int
+#     # weight: int
 
 @app.get("/exercise/{exercise_id}")
 def get_exercise(exercise_id: int, db: Session = Depends(get_db)):

@@ -39,7 +39,7 @@ class User(Base):
     __tablename__ = 'users'
     __table_args__ = {'extend_existing': True}  # Add this line to extend the existing table definition
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     username = Column(String, unique=True, index=True)
     full_name = Column(String)
     email = Column(String, unique=True, index=True)
@@ -68,7 +68,7 @@ class ExerciseCreate(BaseModel):
 class Exercise(Base):
     __tablename__ = "exercises"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
     toughness = Column(String, nullable=True)
@@ -82,6 +82,13 @@ def get_user_data(db, user_id: int):
 
 def get_exercise_by_id(db: Session, exercise_id: int):
     return db.query(Exercise).filter(Exercise.id == exercise_id).first()
+
+def get_exercise_by_tag(db: Session, exercise_tag: str):
+    return db.query(Exercise).filter(Exercise.tags == exercise_tag).first()
+
+
+def get_exercise_by_toughness(db: Session, exercise_toughness: str):
+    return db.query(Exercise).filter(Exercise.toughness == exercise_toughness).first()
 
 # Only create tables if this script is run directly
 if __name__ == "__main__":

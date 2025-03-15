@@ -244,6 +244,59 @@ class LoginScreen(Screen):
 class SignUpScreen(Screen):
     pass
 
+class GuestHomeScreen(Screen):
+    def on_pre_enter(self):
+        """Load all workouts initially."""
+        Clock.schedule_once(lambda dt: self.load_workouts(""), 0.1)
+
+    def load_workouts(self, search_query=""):
+        """Fetch workouts dynamically based on search input."""
+        search_query = search_query.strip().lower()
+        workouts = ExerciseAPI.fetch_exercises()  # ✅ Fetch all exercises from API
+
+        if not workouts:
+            print("⚠️ No workouts found from API")
+            self.display_workouts([])
+            return
+
+        # ✅ Only filter on API response (no in-memory storage)
+        filtered_workouts = [
+            workout for workout in workouts if search_query in workout["name"].lower()
+        ]
+
+        self.display_workouts(filtered_workouts)
+
+    def display_workouts(self, workouts):
+        """Update the UI with workout list."""
+        all_workouts_list = self.ids.get("all_workouts_list", None)
+
+        if not all_workouts_list:
+            print("🚨 ERROR: 'all_workouts_list' ID not found in all_workouts_screen.kv!")
+            return
+
+        all_workouts_list.clear_widgets()  # ✅ Clear previous results
+
+        if not workouts:
+            all_workouts_list.add_widget(OneLineListItem(text="⚠️ No workouts found"))
+            return
+
+        app = MDApp.get_running_app()
+
+        for workout in workouts:
+            name = workout.get("name", "Unknown Workout")
+            workout_id = workout.get("id", "Unknown ID")
+
+            item = OneLineAvatarIconListItem(text=name)
+            item.workout_id = workout_id
+
+            all_workouts_list.add_widget(item)
+
+    def on_search(self, instance, *args):
+        """Fetch workouts dynamically based on user input."""
+        search_text = instance.text.strip()  # ✅ Extract text properly
+        Clock.schedule_once(lambda dt: self.load_workouts(search_text), 0.1)  # ✅ Debounce search
+
+
 class UserInfoScreen(Screen):
     pass
 
@@ -408,14 +461,14 @@ class AllWorkoutsScreen(Screen):
             item = OneLineAvatarIconListItem(text=name)
             item.workout_id = workout_id
 
-            view_button = IconRightWidget(icon="eye")
+            view_button = IconRightWidget(icon="arrow-right")
             view_button.bind(on_release=lambda btn, ex_id=workout_id: app.show_exercise(ex_id))
 
-            delete_button = IconRightWidget(icon="trash-can")
-            delete_button.bind(on_release=lambda btn, ex_id=workout_id: app.delete_exercise(ex_id))
+            # delete_button = IconRightWidget(icon="trash-can")
+            # delete_button.bind(on_release=lambda btn, ex_id=workout_id: app.delete_exercise(ex_id))
 
             item.add_widget(view_button)
-            item.add_widget(delete_button)
+            # item.add_widget(delete_button)
             all_workouts_list.add_widget(item)
 
     def on_search(self, instance, *args):
@@ -473,6 +526,7 @@ Factory.register("LoginScreen", cls=LoginScreen)
 Factory.register("UserInfoScreen", cls=UserInfoScreen)
 Factory.register("SavedScreen", cls=SavedScreen)
 Factory.register("UserScreen", cls=UserScreen)
+Factory.register("GuestHomeScreen", cls=GuestHomeScreen)
 
 # ✅ Explicitly Register Category Screens
 Factory.register("WithEquipmentScreen", cls=WithEquipmentScreen)
@@ -510,6 +564,7 @@ class MainApp(MDApp):
         self.sm.add_widget(SavedScreen(name="saved"))
         self.sm.add_widget(UserScreen(name="user"))
         self.sm.add_widget(AddWorkoutScreen(name="add_workout"))
+        self.sm.add_widget(GuestHomeScreen(name="guest"))
 
 
         # ✅ Add screens for each workout category

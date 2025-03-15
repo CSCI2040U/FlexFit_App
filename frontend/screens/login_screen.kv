@@ -80,3 +80,11 @@
             text_color: 0.2, 0.4, 1, 1  # Blue hyperlink color
             halign: "center"
             on_ref_press: app.switch_to_signup()
+
+        MDLabel:
+            text: "Continue as Guest? [ref=guest][b]Click Here[/b][/ref]"
+            markup: True
+            theme_text_color: "Custom"
+            text_color: 0.2, 0.4, 1, 1  # Blue hyperlink color
+            halign: "center"
+            on_ref_press: app.switch_to_screen("guest")

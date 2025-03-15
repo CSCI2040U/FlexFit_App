@@ -23,7 +23,7 @@
             # ✅ Search Bar
             MDTextField:
                 id: search_field
-                hint_text: "Search workouts..."
+                icon_left: "magnify"
                 mode: "rectangle"
                 size_hint_x: 0.75
                 on_text: root.on_search(self)
@@ -60,8 +60,8 @@
         MDRaisedButton:
             text: "Apply"
             md_bg_color: 0.2, 0.6, 1, 1
-            on_release: app.apply_filter()
+            on_release: root.apply_filter()
 
         MDRaisedButton:
             text: "Cancel"
-            on_release: app.dismiss_filter_dialog()
+            on_release: root.dismiss_filter_dialog()
