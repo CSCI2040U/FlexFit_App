@@ -25,43 +25,16 @@
                 id: search_field
                 icon_left: "magnify"
                 mode: "rectangle"
-                size_hint_x: 0.75
+                size_hint_x: 0.65
                 on_text: root.on_search(self)
 
-            # ✅ Filter Button
             MDIconButton:
+                id: filter_button
                 icon: "filter-variant"
                 theme_icon_color: "Custom"
                 icon_color: 0, 0, 0, 1
-                on_release: root.open_filter_dialog()
+                on_release: root.open_filter_dropdown()
 
         ScrollView:
             MDList:
                 id: all_workouts_list
-
-# ✅ Move the MDDialog outside AllWorkoutsScreen to avoid indentation issues
-<FilterDialogContent>:
-    orientation: "vertical"
-    spacing: dp(10)
-    padding: dp(10)
-
-    MDGridLayout:
-        id: filter_grid
-        cols: 2
-        spacing: dp(10)
-        adaptive_height: True
-
-    MDBoxLayout:
-        orientation: "horizontal"
-        spacing: dp(10)
-        size_hint_y: None
-        height: dp(50)
-
-        MDRaisedButton:
-            text: "Apply"
-            md_bg_color: 0.2, 0.6, 1, 1
-            on_release: root.apply_filter()
-
-        MDRaisedButton:
-            text: "Cancel"
-            on_release: root.dismiss_filter_dialog()

@@ -20,6 +20,7 @@ from kivymd.uix.dialog import MDDialog
 from kivymd.uix.gridlayout import MDGridLayout
 from kivymd.uix.list import OneLineListItem, OneLineAvatarListItem, ImageLeftWidget, OneLineAvatarIconListItem, \
     IconRightWidget, IconLeftWidget, MDList
+from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.pickers import MDDatePicker
 from kivymd.uix.selectioncontrol import MDCheckbox
 from kivymd.uix.textfield import MDTextField
@@ -417,6 +418,18 @@ class FilterDialogContent(MDBoxLayout):
     pass
 
 class AllWorkoutsScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.selected_filters = set()
+        self.menu = None  # ✅ Initialize menu
+
+    # def get_filter_items(self):
+    #     return [{"text": f"{tag}", "on_release": lambda x=tag: self.apply_filter(x)} for tag in ["With Equipment", "Without Equipment", "Outdoor", "Wellness"]]
+    #
+    # def open_dropdown(self):
+    #     self.menu = MDDropdownMenu(items=self.get_filter_items(), width_mult=4)
+    #     self.menu.open()
+
     def on_pre_enter(self):
         """Load all workouts initially."""
         Clock.schedule_once(lambda dt: self.load_workouts(""), 0.1)
@@ -476,44 +489,106 @@ class AllWorkoutsScreen(Screen):
         search_text = instance.text.strip()  # ✅ Extract text properly
         Clock.schedule_once(lambda dt: self.load_workouts(search_text), 0.1)  # ✅ Debounce search
 
-    def open_filter_dialog(self):
-        dialog = self.ids.filter_dialog
-        filter_grid = dialog.content_cls.filter_grid
-        filter_options = ["With Equipment", "Without Equipment", "Outdoor", "Wellness"]
+    from kivymd.uix.menu import MDDropdownMenu
 
-        if not hasattr(self, "selected_filters"):
+    def open_filter_dropdown(self):
+        """Open the filter dropdown menu safely without unpacking errors."""
+
+        filters = ["with equipment", "without equipment", "outdoor", "wellness"]
+
+        menu_items = [
+            {
+                "text": filter_name,
+                "viewclass": "OneLineListItem",
+                "on_release": lambda f=filter_name: self.toggle_filter(f), # ✅ Assign filter properly
+                "md_bg_color": (0.2, 0.6, 1, 1) if filter_name in self.selected_filters else (0.8, 0.8, 0.8, 1)
+            }
+            for filter_name in filters
+        ]
+
+        # ✅ Debugging: Check if menu_items is correctly populated
+        if not menu_items:
+            print("🚨 ERROR: menu_items is empty!")
+
+        self.menu = MDDropdownMenu(
+            caller=self.ids.filter_button,  # ✅ Ensure this button ID exists in the KV file
+            items=menu_items,
+            width_mult=4
+        )
+
+        self.menu.open()
+
+    def toggle_filter(self, filter_name):
+        """Toggle filter buttons and update UI color based on selection."""
+
+        # ✅ Ensure selected_filters is initialized
+        if self.selected_filters is None:
             self.selected_filters = set()
 
-        filter_grid.clear_widgets()
-
-        for option in filter_options:
-            default_color = (0.2,0.6,1,1)
-
-            button = MDRaisedButton(
-                text = option,
-                size_hint_x = 0.5,
-                mb_bg_color = default_color,
-                on_release = lambda btn, opt=option: self.toggle_filter(btn, opt)
-            )
-
-            filter_grid.add_widget(button)
-        dialog.open()
-
-    def toggle_filter(self, button, option):
-        """Toggle filter selection and update button color."""
-        if option in self.selected_filters:
-            self.selected_filters.remove(option)
-            button.md_bg_color = (0.8, 0.8, 0.8, 1)  # Gray (unselected)
+        # ✅ Toggle filter state
+        if filter_name in self.selected_filters:
+            self.selected_filters.remove(filter_name)
+            print(f"❌ Removed Filter: {filter_name}")
         else:
-            self.selected_filters.add(option)
-            button.md_bg_color = (0.2, 0.6, 1, 1)  # Blue (selected)
+            self.selected_filters.add(filter_name)
+            print(f"✅ Added Filter: {filter_name}")
+
+        # ✅ Debugging Output
+        print(f"📌 Current Filters: {self.selected_filters}")
+
+        # ✅ Apply filter changes immediately
+        self.apply_filter()
 
     def apply_filter(self):
-        """Apply selected filters and close the dialog."""
-        if self.selected_filters:
-            filter_query = ",".join(self.selected_filters).lower()
-            self.load_workouts(filter_query)
-        self.ids.filter_dialog.dismiss()
+        """Apply the selected filters and update the workout list."""
+        print(f"🎯 Applying Filters: {self.selected_filters}")
+
+        # ✅ Fetch all workouts
+        all_workouts = ExerciseAPI.fetch_exercises()
+
+        if not all_workouts:
+            print("⚠️ No workouts fetched from API")
+            self.display_workouts([])
+            return
+
+        # ✅ Normalize selected filters (convert to lowercase)
+        normalized_filters = {filter.lower() for filter in self.selected_filters}
+        print(f"🛠️ Normalized Filters: {normalized_filters}")
+
+        # ✅ Debug: Print how tags are stored in the API response
+        for workout in all_workouts[:5]:  # Print first 5 workouts only
+            print(f"📌 API Workout: {workout['name']}, Tags: {workout.get('tags', 'N/A')}")
+
+        # ✅ If no filters are selected, show all workouts
+        if not self.selected_filters:
+            self.display_workouts(all_workouts)
+            return
+
+        # ✅ Fix Filtering Logic (Convert API Tags to lowercase)
+        filtered_workouts = []
+        for workout in all_workouts:
+            workout_tags = workout.get("tags", [])
+
+            # ✅ Ensure tags are a **list** and convert to lowercase
+            if isinstance(workout_tags, str):
+                try:
+                    workout_tags = json.loads(workout_tags)  # Convert string to list
+                except json.JSONDecodeError:
+                    workout_tags = []
+
+            workout_tags = {tag.lower() for tag in workout_tags}  # ✅ Convert tags to lowercase
+
+            print(f"🔹 Checking: {workout['name']} -> Tags: {workout_tags}")
+
+            # ✅ Check if at least one normalized filter is in workout tags
+            if normalized_filters.intersection(workout_tags):
+                filtered_workouts.append(workout)
+
+        # ✅ Debugging Output
+        print(f"📌 Displaying {len(filtered_workouts)} workouts after filtering")
+
+        # ✅ Update UI with filtered workouts
+        self.display_workouts(filtered_workouts)
 
 
 # ✅ Register Screens in Factory
@@ -533,8 +608,8 @@ Factory.register("WithEquipmentScreen", cls=WithEquipmentScreen)
 Factory.register("WithoutEquipmentScreen", cls=WithoutEquipmentScreen)
 Factory.register("OutdoorScreen", cls=OutdoorScreen)
 Factory.register("WellnessScreen", cls=WellnessScreen)
+Factory.register("ExerciseDetailScreen", cls=ExerciseDetailScreen)
 
-Factory.register(ExerciseDetailScreen, cls=ExerciseDetailScreen)
 # ✅ Load all KV Files Dynamically
 KV_DIR = "screens"
 for file in os.listdir(KV_DIR):
