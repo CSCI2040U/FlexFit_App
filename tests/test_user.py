@@ -57,6 +57,24 @@ def test_update_user(db_session, sample_user):
     updated_user = db_session.query(User).filter(User.id == 1).first()
     assert updated_user.height == "6'0"
 
+def test_update_user_weight(db_session, sample_user):
+    """Test updating user weight."""
+    sample_user.weight = "90kg"
+    db_session.commit()
+
+    updated_user_weight = db_session.query(User).filter(User.id == 1).first()
+    assert updated_user_weight.weight == "90kg"
+
+def test_updateuser_saved_exercises(db_session, sample_user):
+    """Test adding a saved exercise for a user."""
+    saved = SavedExercise(user_id=sample_user.id, exercise_id=101)
+    db_session.add(saved)
+    db_session.commit()
+
+    result = db_session.query(SavedExercise).filter_by(user_id=sample_user.id, exercise_id=101).first()
+    assert result is not None
+    assert result.user_id == sample_user.id
+    assert result.exercise_id == 101
 
 def test_get_user_data(db_session, sample_user):
     """Test fetching user data by ID."""
