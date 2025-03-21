@@ -1,4 +1,4 @@
-# FlexFit_App
+
 # FlexFit App
 
 FlexFit is a fitness application designed to help users achieve a healthier lifestyle by logging workouts, searching for new exercises, and utilizing additional fitness features. The app aims to revolutionize the fitness industry by giving users complete control over every aspect of their workouts.
