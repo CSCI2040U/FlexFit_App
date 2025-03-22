@@ -267,7 +267,6 @@ def get_exercise(exercise_id: int, db: Session = Depends(get_db)):
         print(traceback.format_exc())  # ✅ This will show the full error in logs
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-
 @app.put("/edit_exercise/{exercise_id}/")
 async def edit_exercise(exercise_id: int, exercise_update: ExerciseUpdate, db: Session = Depends(get_db)):
     exercise = db.query(Exercise).filter(Exercise.id == exercise_id).first()
