@@ -282,6 +282,334 @@ class SignUpScreen(Screen):
     pass
 
 class GuestHomeScreen(Screen):
+<<<<<<< HEAD
+=======
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.selected_filters = set()
+        self.menu = None  # ✅ Initialize menu
+
+    def on_pre_enter(self):
+        """Load all workouts initially."""
+        Clock.schedule_once(lambda dt: self.load_workouts(""), 0.1)
+
+    def load_workouts(self, search_query=""):
+        """Fetch workouts dynamically based on search input."""
+        search_query = search_query.strip().lower()
+        workouts = ExerciseAPI.fetch_exercises()  # ✅ Fetch all exercises from API
+
+        if not workouts:
+            print("⚠️ No workouts found from API")
+            self.display_workouts([])
+            return
+
+        # ✅ Only filter on API response (no in-memory storage)
+        filtered_workouts = [
+            workout for workout in workouts if search_query in workout["name"].lower()
+        ]
+
+        self.display_workouts(filtered_workouts)
+
+    def display_workouts(self, workouts):
+        """Update the UI with workout list."""
+        all_workouts_list = self.ids.get("all_workouts_list", None)
+
+        if not all_workouts_list:
+            print("🚨 ERROR: 'all_workouts_list' ID not found in all_workouts_screen.kv!")
+            return
+
+        all_workouts_list.clear_widgets()  # ✅ Clear previous results
+
+        if not workouts:
+            all_workouts_list.add_widget(OneLineListItem(text="⚠️ No workouts found"))
+            return
+
+        app = MDApp.get_running_app()
+
+        for workout in workouts:
+            name = workout.get("name", "Unknown Workout")
+            workout_id = workout.get("id", "Unknown ID")
+
+            item = OneLineAvatarIconListItem(text=name)
+            item.workout_id = workout_id
+
+            view_button = IconRightWidget(icon="arrow-right")
+            view_button.bind(on_release=lambda btn, ex_id=workout_id: app.show_guest_exercise(ex_id))
+
+            item.add_widget(view_button)
+            all_workouts_list.add_widget(item)
+
+    def on_search(self, instance, *args):
+        """Fetch workouts dynamically based on user input."""
+        search_text = instance.text.strip()  # ✅ Extract text properly
+        Clock.schedule_once(lambda dt: self.load_workouts(search_text), 0.1)  # ✅ Debounce search
+
+    def open_filter_dropdown(self):
+        """Open the filter dropdown menu safely without unpacking errors."""
+
+        filters = ["with equipment", "without equipment", "outdoor", "wellness"]
+
+        menu_items = [
+            {
+                "text": filter_name,
+                "viewclass": "OneLineListItem",
+                "on_release": lambda f=filter_name: self.toggle_filter(f), # ✅ Assign filter properly
+                "md_bg_color": (0.2, 0.6, 1, 1) if filter_name in self.selected_filters else (0.8, 0.8, 0.8, 1)
+            }
+            for filter_name in filters
+        ]
+
+        # ✅ Debugging: Check if menu_items is correctly populated
+        if not menu_items:
+            print("🚨 ERROR: menu_items is empty!")
+
+        self.menu = MDDropdownMenu(
+            caller=self.ids.filter_button,  # ✅ Ensure this button ID exists in the KV file
+            items=menu_items,
+            width_mult=4
+        )
+
+        self.menu.open()
+
+    def toggle_filter(self, filter_name):
+        """Toggle filter buttons and update UI color based on selection."""
+
+        # ✅ Ensure selected_filters is initialized
+        if self.selected_filters is None:
+            self.selected_filters = set()
+
+        # ✅ Toggle filter state
+        if filter_name in self.selected_filters:
+            self.selected_filters.remove(filter_name)
+            print(f"❌ Removed Filter: {filter_name}")
+        else:
+            self.selected_filters.add(filter_name)
+            print(f"✅ Added Filter: {filter_name}")
+
+        # ✅ Debugging Output
+        print(f"📌 Current Filters: {self.selected_filters}")
+
+        # ✅ Apply filter changes immediately
+        self.apply_filter()
+
+    def apply_filter(self):
+        """Apply the selected filters and update the workout list."""
+        print(f"🎯 Applying Filters: {self.selected_filters}")
+
+        # ✅ Fetch all workouts
+        all_workouts = ExerciseAPI.fetch_exercises()
+
+        if not all_workouts:
+            print("⚠️ No workouts fetched from API")
+            self.display_workouts([])
+            return
+
+        # ✅ Normalize selected filters (convert to lowercase)
+        normalized_filters = {filter.lower() for filter in self.selected_filters}
+        print(f"🛠️ Normalized Filters: {normalized_filters}")
+
+        # ✅ Debug: Print how tags are stored in the API response
+        for workout in all_workouts[:5]:  # Print first 5 workouts only
+            print(f"📌 API Workout: {workout['name']}, Tags: {workout.get('tags', 'N/A')}")
+
+        # ✅ If no filters are selected, show all workouts
+        if not self.selected_filters:
+            self.display_workouts(all_workouts)
+            return
+
+        # ✅ Fix Filtering Logic (Convert API Tags to lowercase)
+        filtered_workouts = []
+        for workout in all_workouts:
+            workout_tags = workout.get("tags", [])
+
+            # ✅ Ensure tags are a **list** and convert to lowercase
+            if isinstance(workout_tags, str):
+                try:
+                    workout_tags = json.loads(workout_tags)  # Convert string to list
+                except json.JSONDecodeError:
+                    workout_tags = []
+
+            workout_tags = {tag.lower() for tag in workout_tags}  # ✅ Convert tags to lowercase
+
+            print(f"🔹 Checking: {workout['name']} -> Tags: {workout_tags}")
+
+            # ✅ Check if at least one normalized filter is in workout tags
+            if normalized_filters.intersection(workout_tags):
+                filtered_workouts.append(workout)
+
+        # ✅ Debugging Output
+        print(f"📌 Displaying {len(filtered_workouts)} workouts after filtering")
+
+        # ✅ Update UI with filtered workouts
+        self.display_workouts(filtered_workouts)
+
+
+class UserInfoScreen(Screen):
+    pass
+
+class HomeScreen(Screen):
+    pass
+
+class SavedScreen(Screen):
+    def on_pre_enter(self):
+        """Load saved exercises when switching to SavedScreen"""
+        print("🔄 Loading Saved Exercises...")
+        self.load_saved_exercises()
+
+    def load_saved_exercises(self, search_query=""):
+        """Populate saved exercises list with optional search functionality"""
+        exercise_list = self.ids.get("exercise_list", None)
+
+        if not exercise_list:
+            print("🚨 ERROR: 'exercise_list' ID not found in KV file!")
+            return
+
+        exercise_list.clear_widgets()
+
+        app = MDApp.get_running_app()
+        saved_exercises = app.saved_exercises
+
+        if not saved_exercises:
+            exercise_list.add_widget(OneLineListItem(text="⚠️ No saved exercises yet!"))
+            return
+
+        # ✅ Apply search filter
+        filtered_exercises = [
+            name for name in saved_exercises if search_query.lower() in name.lower()
+        ] if search_query else saved_exercises
+
+        if not filtered_exercises:
+            exercise_list.add_widget(OneLineListItem(text="⚠️ No matches found!"))
+            return
+
+        for name in filtered_exercises:
+            item = OneLineListItem(text=name)
+            exercise_list.add_widget(item)
+
+    def on_search(self, instance, search_text=""):
+        """Triggered when search text changes"""
+        print(f"🔍 Searching for: {search_text}")
+        self.load_saved_exercises(search_query=search_text)
+
+
+class UserScreen(Screen):
+    pass
+
+# ✅ Category Screens (Now Inheriting from ExerciseCategoryScreen)
+class WithEquipmentScreen(ExerciseCategoryScreen):
+    category_filter = StringProperty("with equipment")
+
+
+class WithoutEquipmentScreen(ExerciseCategoryScreen):
+    category_filter = StringProperty("without equipment")
+
+class OutdoorScreen(ExerciseCategoryScreen):
+    category_filter = StringProperty("outdoor")
+
+class WellnessScreen(ExerciseCategoryScreen):
+    category_filter = StringProperty("wellness")
+
+class AddWorkoutScreen(ExerciseCategoryScreen):
+    selected_toughness = StringProperty("Easy")
+
+    def set_toughness(self, toughness):
+        self.selected_toughness = toughness
+        print(f"Toughness set to {self.selected_toughness}")
+
+class ExerciseDetailScreen(Screen):
+    exercise_id = StringProperty("")
+    exercise_name = StringProperty("")
+    exercise_description = StringProperty("")
+    exercise_tags = StringProperty("")
+    exercise_reps = StringProperty("")
+    exercise_toughness = StringProperty("")
+    exercise_image_url = StringProperty("")
+
+    def display_exercise(self, exercise_id):
+        """Fetch and display exercise details from the backend."""
+        self.exercise_id = str(exercise_id)
+        BASE_URL = "http://127.0.0.1:8000"
+        response = requests.get(f"{BASE_URL}/exercise/{exercise_id}")
+
+        if response.status_code == 200:
+            exercise_data = response.json()
+            print(f"📄 API Response: {exercise_data}")
+
+            # ✅ Since FastAPI now returns a list, join it properly
+            self.exercise_tags = ", ".join(exercise_data.get("tags", [])) if exercise_data.get(
+                "tags") else "No tags available"
+
+            self.exercise_name = exercise_data.get("name", "Unknown Exercise")
+            self.exercise_description = exercise_data.get("description", "No description available.")
+            self.exercise_reps = str(exercise_data.get("suggested_reps", "N/A"))
+            self.exercise_toughness = exercise_data.get("toughness", "Unknown")
+            self.exercise_image_url = exercise_data.get("image_url", "")
+
+            Clock.schedule_once(lambda dt: self.property_refresh(), 0)
+
+        else:
+            print(f"❌ ERROR: Failed to fetch exercise. Status {response.status_code}")
+            print(f"⚠️ API Error Message: {response.text}")
+
+    def property_refresh(self):
+        """Manually refresh properties to update UI."""
+        self.property("exercise_name").dispatch(self)
+        self.property("exercise_description").dispatch(self)
+        self.property("exercise_tags").dispatch(self)
+        self.property("exercise_reps").dispatch(self)
+        self.property("exercise_toughness").dispatch(self)
+        self.property("exercise_image_url").dispatch(self)
+
+class GuestExerciseDetailScreen(Screen):
+    exercise_id = StringProperty("")
+    exercise_name = StringProperty("")
+    exercise_description = StringProperty("")
+    exercise_tags = StringProperty("")
+    exercise_reps = StringProperty("")
+    exercise_toughness = StringProperty("")
+    exercise_image_url = StringProperty("")
+
+    def display_exercise(self, exercise_id):
+        """Fetch and display exercise details from the backend."""
+        self.exercise_id = str(exercise_id)
+        BASE_URL = "http://127.0.0.1:8000"
+        response = requests.get(f"{BASE_URL}/exercise/{exercise_id}")
+
+        if response.status_code == 200:
+            exercise_data = response.json()
+            print(f"📄 API Response: {exercise_data}")
+
+            # ✅ Since FastAPI now returns a list, join it properly
+            self.exercise_tags = ", ".join(exercise_data.get("tags", [])) if exercise_data.get(
+                "tags") else "No tags available"
+
+            self.exercise_name = exercise_data.get("name", "Unknown Exercise")
+            self.exercise_description = exercise_data.get("description", "No description available.")
+            self.exercise_reps = str(exercise_data.get("suggested_reps", "N/A"))
+            self.exercise_toughness = exercise_data.get("toughness", "Unknown")
+            self.exercise_image_url = exercise_data.get("image_url", "")
+
+            Clock.schedule_once(lambda dt: self.property_refresh(), 0)
+
+        else:
+            print(f"❌ ERROR: Failed to fetch exercise. Status {response.status_code}")
+            print(f"⚠️ API Error Message: {response.text}")
+
+    def property_refresh(self):
+        """Manually refresh properties to update UI."""
+        self.property("exercise_name").dispatch(self)
+        self.property("exercise_description").dispatch(self)
+        self.property("exercise_tags").dispatch(self)
+        self.property("exercise_reps").dispatch(self)
+        self.property("exercise_toughness").dispatch(self)
+        self.property("exercise_image_url").dispatch(self)
+
+
+class FilterDialogContent(MDBoxLayout):
+    pass
+
+class AllWorkoutsScreen(Screen):
+>>>>>>> 2e00a35 (build scripts done and guest feature done)
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.selected_filters = set()
@@ -940,7 +1268,10 @@ Factory.register("OutdoorScreen", cls=OutdoorScreen)
 Factory.register("WellnessScreen", cls=WellnessScreen)
 Factory.register("ExerciseDetailScreen", cls=ExerciseDetailScreen)
 Factory.register("GuestExerciseDetailScreen", cls=GuestExerciseDetailScreen)
+<<<<<<< HEAD
 Factory.register("ProgressScreen", cls=ProgressScreen)
+=======
+>>>>>>> 2e00a35 (build scripts done and guest feature done)
 
 # ✅ Load all KV Files Dynamically
 KV_DIR = "screens"
