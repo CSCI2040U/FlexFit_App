@@ -1,0 +1,68 @@
+<GuestExerciseDetailScreen>:
+    name: "exercise_detail_guest"
+
+    BoxLayout:
+        orientation: "vertical"
+        padding: 10
+        spacing: 10
+        canvas.before:
+            Color:
+                rgba: 1, 1, 1, 1  # ✅ Ensure background is white
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        AsyncImage:
+            source: root.exercise_image_url
+            size_hint: (1, 1)
+
+        MDLabel:
+            text: root.exercise_name
+            font_style: "H5"
+            halign: "center"
+            theme_text_color: "Custom"
+            text_color: 0, 0, 0, 1  # ✅ Black text
+
+        MDLabel:
+            text: "Description: " + root.exercise_description
+            font_style: "Body1"
+            halign: "center"
+            theme_text_color: "Custom"
+            text_color: 0, 0, 0, 1
+
+        MDLabel:
+            text: "Tags: " + root.exercise_tags
+            font_style: "Body1"
+            halign: "center"
+            theme_text_color: "Custom"
+            text_color: 0, 0, 0, 1  # ✅ Ensure visibility
+
+        MDLabel:
+            text: "Suggested Reps: " + root.exercise_reps
+            font_style: "Body1"
+            halign: "center"
+            theme_text_color: "Custom"
+            text_color: 0, 0, 0, 1
+
+        MDLabel:
+            text: "Toughness: " + root.exercise_toughness
+            font_style: "Body1"
+            halign: "center"
+            theme_text_color: "Custom"
+            text_color: 0, 0, 0, 1
+
+        MDBoxLayout:
+            orientation: 'vertical'
+            padding: dp(10)
+            spacing: dp(10)
+            size_hint_y: None
+            height: dp(120)
+            pos_hint: {"center_x": 0.5}
+
+
+            MDRaisedButton:
+                text: "Go Back"
+                md_bg_color: 0.2, 0.7, 0.2, 1
+                size_hint_x: 0.8
+                pos_hint: {"center_x": 0.5}
+                on_release: app.switch_to_screen("guest")

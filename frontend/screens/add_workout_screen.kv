@@ -38,34 +38,69 @@
             font_style: "Subtitle2"
             halign: "center"
 
-        MDRaisedButton:
-            text: "Easy"
-            size_hint_x: 0.3
-            pos_hint: {"center_x": 0.5}
-            on_release: root.set_toughness("Easy")
+        MDBoxLayout:
+            orientation: 'horizontal'
+            MDRaisedButton:
+                text: "Easy"
+                size_hint_x: 0.3
+                pos_hint: {"center_x": 0.5}
+                padding: dp(20)
+                on_release: root.set_toughness("Easy")
 
-        MDRaisedButton:
-            text: "Medium"
-            size_hint_x: 0.3
-            pos_hint: {"center_x": 0.5}
-            on_release: root.set_toughness("Medium")
+            MDRaisedButton:
+                text: "Medium"
+                size_hint_x: 0.3
+                pos_hint: {"center_x": 0.5}
+                padding: dp(20)
+                on_release: root.set_toughness("Medium")
 
-        MDRaisedButton:
-            text: "Hard"
-            size_hint_x: 0.3
-            pos_hint: {"center_x": 0.5}
-            on_release: root.set_toughness("Hard")
+            MDRaisedButton:
+                text: "Hard"
+                size_hint_x: 0.3
+                pos_hint: {"center_x": 0.5}
+                padding: dp(20)
+                on_release: root.set_toughness("Hard")
 
         MDLabel:
             text: "Enter tags (comma-separated)"
             font_style: "Subtitle2"
             halign: "center"
 
-        MDTextField:
-            id: workout_tags
-            mode: "rectangle"
-            size_hint_x: 0.9
-            pos_hint: {"center_x": 0.5}
+        MDBoxLayout:
+            orientation: 'vertical'
+            size_hint_y: 1
+
+            MDBoxLayout:
+                orientation: 'horizontal'
+
+                MDRaisedButton:
+                    text: "With Equipment"
+                    size_hint_x: 0.5
+                    size_hint_y: 1
+                    pos_hint: {"center_x": 0.5}
+                    on_release: root.set_toughness("Easy")
+
+                MDRaisedButton:
+                    text: "Without Equipment"
+                    size_hint_x: 0.5
+                    size_hint_y: 1
+                    pos_hint: {"center_x": 0.5}
+                    on_release: root.set_toughness("Medium")
+            MDBoxLayout:
+                orientation: 'horizontal'
+                MDRaisedButton:
+                    text: "Outdoor"
+                    size_hint_x: 0.5
+                    size_hint_y: 1
+                    pos_hint: {"center_x": 0.5}
+                    on_release: root.set_toughness("Hard")
+
+                MDRaisedButton:
+                    text: "Wellness"
+                    size_hint_x: 0.5
+                    size_hint_y: 1
+                    pos_hint: {"center_x": 0.5}
+                    on_release: root.set_toughness("Hard")
 
         MDLabel:
             text: "Workout Reps"

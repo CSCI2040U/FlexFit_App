@@ -8,12 +8,12 @@ python -m venv venv
 call venv\Scripts\activate
 
 :: Step 3: Upgrade pip
-echo 🔄 Upgrading pip...
+echo Upgrading pip...
 python -m pip install --upgrade pip
 
-:: Step 4: Install dependencies
-echo 📦 Installing dependencies...
+:: Step 4: Installing dependencies
+echo Installing dependencies...
 pip install -r requirements.txt
 
-echo ✅ Setup complete. You can now run your app!
+echo Setup complete. Stay Fit, Let Others Stay Fit!
 pause

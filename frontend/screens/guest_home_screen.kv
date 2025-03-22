@@ -28,6 +28,13 @@
                 size_hint_x: 0.75
                 on_text: root.on_search(self)
 
+            MDIconButton:
+                id: filter_button
+                icon: "filter-variant"
+                theme_icon_color: "Custom"
+                icon_color: 0, 0, 0, 1
+                on_release: root.open_filter_dropdown()
+
         ScrollView:
             MDList:
                 id: all_workouts_list
