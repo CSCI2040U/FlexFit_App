@@ -4,7 +4,7 @@ from fastapi import FastAPI, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal, engine, get_user_data, ExerciseCreate, get_exercise_by_id
-from backend.models import Base, Exercise, User
+from backend.models import Base, Exercise, User, SavedExercise, ProgressLog
 from backend.routes import exercises
 from backend.schemas import UserCreate, LoginRequest
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -126,7 +126,12 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
 
     # Create JWT token for the authenticated user
     access_token = create_access_token(data={"sub": user.email})
-    return {"access_token": access_token, "token_type": "bearer"}
+
+    user_data = get_user_data(db, user.id)
+
+    return {"access_token": access_token,
+            "token_type": "bearer",
+            "user": user_data}
 
 @app.post("/signup/")
 def signup(user_info: UserCreate, db: Session = Depends(get_db)):
@@ -170,6 +175,27 @@ def signup(user_info: UserCreate, db: Session = Depends(get_db)):
         print(f"🚨 ERROR: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/toggle_saved/{user_id}/{exercise_id}")
+def toggle_saved_exercise(user_id: int, exercise_id: int, db: Session = Depends(get_db)):
+    existing = db.query(SavedExercise).filter_by(user_id=user_id, exercise_id=exercise_id).first()
+
+    if existing:
+        db.delete(existing)
+        db.commit()
+        return {"status": "removed"}
+    else:
+        new_entry = SavedExercise(user_id=user_id, exercise_id=exercise_id)
+        db.add(new_entry)
+        db.commit()
+        return {"status": "saved"}
+
+
+@app.get("/saved_exercises/{user_id}")
+def get_saved_exercises(user_id: int, db: Session = Depends(get_db)):
+    saved = db.query(SavedExercise.exercise_id).filter_by(user_id=user_id).all()
+    return [item.exercise_id for item in saved]
+
+
 # Protected route that requires JWT token
 @app.get("/protected/")
 def protected_route(token: str = Depends(oauth2_scheme)):
@@ -183,9 +209,10 @@ def protected_route(token: str = Depends(oauth2_scheme)):
 def get_user_info(user_id: int, db: Session = Depends(get_db)):
     user_data = get_user_data(db, user_id)
     if user_data:
-        height, weight = user_data
-        return {"height": height, "weight": weight}
+        height, weight, username = user_data
+        return {"height": height, "weight": weight, "username": username}
     return {"error": "User not found"}
+
 
 @app.post("/logout/")
 def logout():
@@ -279,3 +306,38 @@ async def edit_exercise(exercise_id: int, exercise_update: ExerciseUpdate, db: S
     db.refresh(exercise)
 
     return {"message": "Exercise updated successfully", "exercise": {"id": exercise.id, "name": exercise.name}}
+
+@app.put("/user/{user_id}/update")
+def update_user_info(user_id: int, data: dict, db: Session = Depends(get_db)):
+    user = db.query(User).filter_by(id=user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if "height" in data:
+        user.height = data["height"]
+    if "weight" in data:
+        user.weight = data["weight"]
+
+    db.commit()
+    db.refresh(user)
+    return {"message": "User info updated successfully"}
+
+@app.post("/progress/{user_id}")
+def log_progress(user_id: int, height: float = None, weight: float = None, db: Session = Depends(get_db)):
+    entry = ProgressLog(user_id=user_id, height=height, weight=weight)
+    db.add(entry)
+    db.commit()
+    db.refresh(entry)
+    return {"message": "Progress logged successfully"}
+
+@app.get("/progress/{user_id}")
+def get_progress(user_id: int, db: Session = Depends(get_db)):
+    logs = db.query(ProgressLog).filter(ProgressLog.user_id == user_id).order_by(ProgressLog.date).all()
+    return [
+        {
+            "date": log.date,
+            "height": log.height,
+            "weight": log.weight
+        }
+        for log in logs
+    ]

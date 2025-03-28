@@ -30,7 +30,8 @@
                         pos_hint: {'center_x': 0.5}
 
                     MDLabel:
-                        text: "Hello User!"
+                        id: greeting_user_text
+                        text: ""
                         bold: True
                         font_style: "H5"
                         halign: "center"
@@ -67,7 +68,8 @@
                                 theme_text_color: "Secondary"
 
                             MDLabel:
-                                text: "183cm"
+                                id: height_label
+                                text: ""
                                 halign: "center"
                                 font_style: "H5"
                                 theme_text_color: "Primary"
@@ -77,6 +79,7 @@
                                 user_font_size: "20sp"
                                 pos_hint: {"center_x": 0.5}
                                 theme_text_color: "Secondary"
+                                on_release: app.edit_height()
 
                     # Weight Card
                     MDCard:
@@ -99,7 +102,8 @@
                                 theme_text_color: "Secondary"
 
                             MDLabel:
-                                text: "80kg"
+                                id: weight_label
+                                text: ""
                                 halign: "center"
                                 font_style: "H5"
                                 theme_text_color: "Primary"
@@ -109,6 +113,7 @@
                                 user_font_size: "20sp"
                                 pos_hint: {"center_x": 0.5}
                                 theme_text_color: "Secondary"
+                                on_release: app.edit_weight()
 
                 # Buttons Section
                 MDBoxLayout:
@@ -159,3 +164,9 @@
                 text: "User"
                 icon: "account"
                 on_tab_press: app.switch_to_screen("user")
+
+            MDBottomNavigationItem:
+                name: "progress"
+                text: "Progress"
+                icon: "chart-line"
+                on_tab_press: app.switch_to_screen("progress")

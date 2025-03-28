@@ -1,0 +1,74 @@
+<ProgressScreen>:
+    name: "progress"
+
+    MDBoxLayout:
+        orientation: "vertical"
+        padding: dp(20)
+        spacing: dp(10)
+
+        MDLabel:
+            text: "Your Progress"
+            halign: "center"
+            font_style: "H5"
+            size_hint_y: None
+            height: self.texture_size[1] + dp(20)
+
+        MDTextField:
+            id: height_input
+            hint_text: "Enter Height (cm)"
+            input_filter: "float"
+            mode: "rectangle"
+
+        MDTextField:
+            id: weight_input
+            hint_text: "Enter Weight (kg)"
+            input_filter: "float"
+            mode: "rectangle"
+
+        MDRaisedButton:
+            text: "Log Progress"
+            pos_hint: {"center_x": 0.5}
+            on_release: root.log_progress()
+
+        MDRaisedButton:
+            text: "Show Graphs"
+            pos_hint: {"center_x": 0.5}
+            on_release: root.show_graphs()
+
+        MDSeparator:
+            height: dp(1)
+
+        ScrollView:
+            MDList:
+                id: progress_list
+
+
+    MDBottomNavigation:
+        id: bottom_nav
+        panel_color: "#eeeeee"
+        pos_hint: {"bottom": 1}
+        size_hint_y: 1/4
+
+        MDBottomNavigationItem:
+            name: "home"
+            text: "Home"
+            icon: "home"
+            on_tab_press: app.switch_to_screen("home")
+
+        MDBottomNavigationItem:
+            name: "saved"
+            text: "Saved"
+            icon: "bookmark"
+            on_tab_press: app.switch_to_screen("saved")
+
+        MDBottomNavigationItem:
+            name: "user"
+            text: "User"
+            icon: "account"
+            on_tab_press: app.switch_to_screen("user")
+
+        MDBottomNavigationItem:
+            name: "progress"
+            text: "Progress"
+            icon: "chart-line"
+            on_tab_press: app.switch_to_screen("progress")

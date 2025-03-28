@@ -10,6 +10,7 @@ from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.image import AsyncImage
 from kivy.uix.label import Label
+from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.scrollview import ScrollView
 from kivymd.app import MDApp
@@ -25,6 +26,8 @@ from kivymd.uix.pickers import MDDatePicker
 from kivymd.uix.selectioncontrol import MDCheckbox
 from kivymd.uix.textfield import MDTextField
 
+from backend.database import get_user_data
+from backend.main import get_user_info
 from frontend.test import LoginScreen
 
 # ✅ Set Kivy to use ANGLE for OpenGL stability
@@ -141,7 +144,8 @@ class ExerciseCategoryScreen(Screen):
             # ✅ Set the correct icon state based on whether the exercise is saved
             icon_name = "bookmark" if name in app.saved_exercises else "bookmark-outline"
             save_button = IconLeftWidget(icon=icon_name)
-            save_button.bind(on_release=lambda btn, ex=name: self.toggle_save_exercise(ex, btn))
+            save_button.bind(
+                on_release=lambda btn, ex_id=exercise_id, ex_name=name: app.toggle_bookmark(ex_id, ex_name, btn))
 
             item.add_widget(edit_button)
             item.add_widget(delete_button)
@@ -200,18 +204,50 @@ class PasswordTextField(MDTextField):
 
 def login_user(email: str, password: str):
     url = "http://127.0.0.1:8000/login/"
-    data = {"email": email, "password": password}
 
-    # Send POST request to login
-    response = requests.post(url, json=data)
+    try:
+        # Send POST request to login
+        response = requests.post(url, json={"email": email, "password": password})
+        if response.status_code == 200:
+            data = response.json()
+            token = data.get("access_token")
+            save_token(token)  # Save token locally
 
-    # Check if login was successful
-    if response.status_code == 200:
-        token = response.json().get("access_token")
-        save_token(token)  # Save the token locally
-        return token
-    else:
-        print("Login failed:", response.json())
+            # ✅ Save user info globally
+            app = MDApp.get_running_app()
+            app.user_info = {
+                "id": data["user"]["id"],
+                "username": data["user"]["username"],
+                "email": data["user"]["email"],
+                "height": data["user"]["height"],
+                "weight": data["user"]["weight"],
+                "gender": data["user"]["gender"],
+                "birthdate": data["user"]["dob"],
+                "role": data["user"]["role"]
+            }
+
+            user_id = app.user_info["id"]
+            saved_url = f"http://127.0.0.1:8000/saved_exercises/{user_id}/"
+            saved_response = requests.get(saved_url)
+
+            if saved_response.status_code == 200:
+                saved_ids = saved_response.json()
+                all_exercises = ExerciseAPI.fetch_exercises()
+                app.saved_exercises = {
+                    ex["name"] for ex in all_exercises if ex["id"] in saved_ids
+                }
+                print(f"📌 Loaded {len(app.saved_exercises)} saved exercises")
+            else:
+                print(f"⚠️ Could not load saved exercises: {saved_response.status_code} | {saved_response.text}")
+                app.saved_exercises = set()
+
+            print(f"✅ Logged in as: {app.user_info}")
+            return token
+        else:
+            print(f"❌ Login failed: {response.status_code}, {response.json()}")
+            return None
+    except Exception as e:
+        print(f"🚨 ERROR during login: {e}")
         return None
 
 # ✅ Define Screens
@@ -414,8 +450,32 @@ class HomeScreen(Screen):
 
 class SavedScreen(Screen):
     def on_pre_enter(self):
-        """Load saved exercises when switching to SavedScreen"""
-        print("🔄 Loading Saved Exercises...")
+        """Load saved exercises from the database"""
+        print("🔄 Loading Saved Exercises from DB...")
+        app = MDApp.get_running_app()
+        user_id = app.user_info.get("id")
+
+        if not user_id:
+            print("🚨 No user logged in")
+            return
+
+        try:
+            response = requests.get(f"http://127.0.0.1:8000/saved_exercises/{user_id}")
+            if response.status_code == 200:
+                exercise_ids = response.json()
+
+                # Fetch all exercises and map IDs to names
+                all_exercises = ExerciseAPI.fetch_exercises()
+                id_to_name = {ex["id"]: ex["name"] for ex in all_exercises}
+                app.saved_exercises = {id_to_name[ex_id] for ex_id in exercise_ids if ex_id in id_to_name}
+
+                print(f"✅ Loaded {len(app.saved_exercises)} saved exercises")
+            else:
+                print(f"❌ Failed to load saved exercises: {response.text}")
+
+        except Exception as e:
+            print(f"🚨 Error fetching saved exercises: {e}")
+
         self.load_saved_exercises()
 
     def load_saved_exercises(self, search_query=""):
@@ -455,7 +515,14 @@ class SavedScreen(Screen):
 
 
 class UserScreen(Screen):
-    pass
+    def on_enter(self):
+        app = MDApp.get_running_app()
+        user_info = app.user_info
+
+        self.ids.greeting_user_text.text = f"Hello {user_info.get('username', 'N/A')}"
+        self.ids.height_label.text = f"{user_info.get('height', 'N/A')} cm"
+        self.ids.weight_label.text = f"{user_info.get('weight', 'N/A')} kg"
+
 
 # ✅ Category Screens (Now Inheriting from ExerciseCategoryScreen)
 class WithEquipmentScreen(ExerciseCategoryScreen):
@@ -734,6 +801,125 @@ class AllWorkoutsScreen(Screen):
         # ✅ Update UI with filtered workouts
         self.display_workouts(filtered_workouts)
 
+import matplotlib.pyplot as plt
+from io import BytesIO
+import base64
+from kivy.uix.image import Image
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.dialog import MDDialog
+from kivy.core.image import Image as CoreImage
+
+
+class ProgressScreen(Screen):
+    def on_enter(self):
+        self.load_progress_logs()
+
+    def log_progress(self):
+        app = MDApp.get_running_app()
+        user_id = app.user_info.get("id")
+        height = self.ids.height_input.text
+        weight = self.ids.weight_input.text
+
+        if not height or not weight:
+            print("⚠️ Fill both height and weight")
+            return
+
+        try:
+            response = requests.post(
+                f"http://127.0.0.1:8000/progress/{user_id}",
+                params={"height": float(height), "weight": float(weight)}
+            )
+            if response.status_code == 200:
+                print("✅ Progress logged")
+                self.ids.height_input.text = ""
+                self.ids.weight_input.text = ""
+                self.load_progress_logs()
+            else:
+                print(f"❌ Failed to log progress: {response.text}")
+        except Exception as e:
+            print(f"🚨 ERROR logging progress: {e}")
+
+    def load_progress_logs(self):
+        app = MDApp.get_running_app()
+        user_id = app.user_info.get("id")
+        progress_list = self.ids.progress_list
+        progress_list.clear_widgets()
+
+        try:
+            response = requests.get(f"http://127.0.0.1:8000/progress/{user_id}")
+            if response.status_code == 200:
+                logs = response.json()
+                if not logs:
+                    progress_list.add_widget(OneLineListItem(text="No progress entries yet."))
+                    return
+
+                for log in logs[::-1]:  # Show latest on top
+                    date = log.get("date", "")[:10] if log.get("date") else "Unknown Date"
+                    height = log.get("height", "N/A")
+                    weight = log.get("weight", "N/A")
+                    item = OneLineListItem(
+                        text=f"{date}: Height {height} cm, Weight {weight} kg"
+                    )
+                    progress_list.add_widget(item)
+            else:
+                print("❌ Failed to load logs")
+
+        except Exception as e:
+            print(f"🚨 ERROR fetching logs: {e}")
+
+    def show_graphs(self):
+        try:
+            app = MDApp.get_running_app()
+            user_id = app.user_info.get("id")
+
+            response = requests.get(f"http://127.0.0.1:8000/progress/{user_id}")
+            if response.status_code != 200:
+                print("❌ Failed to fetch progress data")
+                return
+
+            logs = response.json()
+            if not logs:
+                print("⚠️ No logs to display")
+                return
+
+            dates = [log["date"][:10] for log in logs]
+            heights = [log["height"] for log in logs]
+            weights = [log["weight"] for log in logs]
+            bmis = []
+
+            for h, w in zip(heights, weights):
+                try:
+                    height_m = h / 100  # convert to meters
+                    bmi = w / (height_m ** 2)
+                    bmis.append(round(bmi, 2))
+                except:
+                    bmis.append(None)
+
+            # Plotting graphs
+            plt.figure(figsize=(10, 6))
+            plt.plot(dates, heights, marker='o', label="Height (cm)")
+            plt.plot(dates, weights, marker='o', label="Weight (kg)")
+            plt.plot(dates, bmis, marker='o', label="BMI", linestyle='--')
+            plt.title("Progress Over Time")
+            plt.xlabel("Date")
+            plt.ylabel("Values")
+            plt.xticks(rotation=45)
+            plt.legend()
+            plt.tight_layout()
+
+            buf = BytesIO()
+            plt.savefig(buf, format='png')
+            buf.seek(0)
+
+            core_image = CoreImage(buf, ext='png')
+            image = Image(texture=core_image.texture)
+
+            self.graph_popup = Popup(title="Progress Graphs", content=image, size_hint=(0.9, 0.9))
+            self.graph_popup.open()
+
+        except Exception as e:
+            print(f"🚨 ERROR showing graphs: {e}")
+
 
 # ✅ Register Screens in Factory
 Factory.register("ClickableCard", cls=ClickableCard)
@@ -754,6 +940,7 @@ Factory.register("OutdoorScreen", cls=OutdoorScreen)
 Factory.register("WellnessScreen", cls=WellnessScreen)
 Factory.register("ExerciseDetailScreen", cls=ExerciseDetailScreen)
 Factory.register("GuestExerciseDetailScreen", cls=GuestExerciseDetailScreen)
+Factory.register("ProgressScreen", cls=ProgressScreen)
 
 # ✅ Load all KV Files Dynamically
 KV_DIR = "screens"
@@ -768,7 +955,7 @@ class MainApp(MDApp):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.user_info = {"birthdate": None, "gender": None, "height": None, "weight": None}
-        self.saved_exercises = set()
+        # self.saved_exercises = set()
 
     def __getattr__(self, name):
         print(f"🚨 Attempted to access: {name}")  # Debugging
@@ -785,6 +972,7 @@ class MainApp(MDApp):
         self.sm.add_widget(UserScreen(name="user"))
         self.sm.add_widget(AddWorkoutScreen(name="add_workout"))
         self.sm.add_widget(GuestHomeScreen(name="guest"))
+        self.sm.add_widget(ProgressScreen(name="progress"))
 
 
         # ✅ Add screens for each workout category
@@ -990,6 +1178,76 @@ class MainApp(MDApp):
         )
         self.dialog.open()
 
+    def edit_height(self):
+        self.dialog = MDDialog(
+            title="Edit Height",
+            type="custom",
+            content_cls=MDTextField(hint_text="Enter New Height in cm", input_filter='int'),
+            buttons=[
+                MDRaisedButton(
+                    text="Save",
+                    on_release=lambda _: self.confirm_edit_user("height")
+                ),
+                MDRaisedButton(
+                    text="Cancel",
+                    on_release=lambda _: self.dialog.dismiss()
+                )
+            ]
+        )
+        self.dialog.open()
+
+    def edit_weight(self):
+        self.dialog = MDDialog(
+            title="Edit Weight",
+            type="custom",
+            content_cls=MDTextField(hint_text="Enter New Weight in kg", input_filter='int'),
+            buttons=[
+                MDRaisedButton(
+                    text="Save",
+                    on_release=lambda _: self.confirm_edit_user("weight")
+                ),
+                MDRaisedButton(
+                    text="Cancel",
+                    on_release=lambda _: self.dialog.dismiss()
+                )
+            ]
+        )
+        self.dialog.open()
+
+    def confirm_edit_user(self, field):
+        new_value = self.dialog.content_cls.text.strip()
+        self.dialog.dismiss()
+
+        if not new_value.isdigit():
+            print("❌ Invalid input. Please enter a number.")
+            return
+
+        user_id = self.user_info.get("id")
+        if not user_id:
+            print("❌ User not logged in")
+            return
+
+        payload = {field: int(new_value)}
+        url = f"http://127.0.0.1:8000/user/{user_id}/update"
+
+        try:
+            response = requests.put(url, json=payload)
+            if response.status_code == 200:
+                print(f"✅ Successfully updated {field} to {new_value}")
+                self.user_info[field] = int(new_value)
+
+                # ✅ Update UI immediately
+                user_screen = self.root.get_screen("user")
+                if field == "height":
+                    user_screen.ids.height_label.text = f"{new_value} cm"
+                elif field == "weight":
+                    user_screen.ids.weight_label.text = f"{new_value} kg"
+
+            else:
+                print(f"❌ Failed to update {field}: {response.json()}")
+        except Exception as e:
+            print(f"🚨 Error updating {field}: {e}")
+
     def confirm_edit_workout(self, exercise_id):
         new_name = self.dialog.content_cls.text.strip()
         if not new_name:
@@ -1066,17 +1324,28 @@ class MainApp(MDApp):
             item = OneLineListItem(text=exercise)
             exercise_list.add_widget(item)
 
-    def toggle_bookmark(self, exercise_name):
-        """Toggle bookmark status for an exercise."""
-        if exercise_name in self.saved_exercises:
-            print(f"❌ Removing {exercise_name} from saved exercises.")
-            self.saved_exercises.remove(exercise_name)
-        else:
-            print(f"✅ Saving {exercise_name} to saved exercises.")
-            self.saved_exercises.add(exercise_name)
+    def toggle_bookmark(self, exercise_id, exercise_name, save_button):
+        user_id = self.user_info.get("id")
+        if not user_id:
+            print("🚨 No user logged in")
+            return
 
-        # ✅ Update saved screen
-        self.update_saved_screen()
+        try:
+            response = requests.post(f"http://127.0.0.1:8000/toggle_saved/{user_id}/{exercise_id}")
+            if response.status_code == 200:
+                if exercise_name in self.saved_exercises:
+                    self.saved_exercises.remove(exercise_name)
+                    save_button.icon = "bookmark-outline"
+                    print(f"❌ Unsaved {exercise_name}")
+                else:
+                    self.saved_exercises.add(exercise_name)
+                    save_button.icon = "bookmark"
+                    print(f"✅ Saved {exercise_name}")
+                self.update_saved_screen()
+            else:
+                print(f"❌ Failed to toggle bookmark: {response.text}")
+        except Exception as e:
+            print(f"🚨 Error while toggling saved exercise: {e}")
 
     def switch_to_add_workout(self):
         """Switch to AddWorkoutScreen."""
