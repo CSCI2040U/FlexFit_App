@@ -8,7 +8,7 @@ from backend.models import User, SavedExercise,Exercise
 
 # Use an in-memory SQLite database for testing
 TEST_DATABASE_URL = "sqlite:///:memory:"
-# ✅ Add connect_args to enable SQLite foreign key support
+# Add connect_args to enable SQLite foreign key support
 engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -19,7 +19,7 @@ Base.metadata.create_all(bind=engine)
 def db_session():
     session = TestingSessionLocal()
 
-    # ✅ Enables ON DELETE CASCADE in SQLite
+    #  Enables ON DELETE CASCADE in SQLite
     session.execute(text("PRAGMA foreign_keys=ON"))
 
     yield session
@@ -31,7 +31,7 @@ def db_session():
 @pytest.fixture
 def sample_user(db_session):
     """Fixture to create a fresh sample user each time."""
-    db_session.query(User).delete()  # ✅ Clear previous test data
+    db_session.query(User).delete()  #  Clear previous test data
     db_session.commit()
 
     user = User(id=1, username="test", full_name="Test User", email="testuser@example.com",
@@ -42,10 +42,10 @@ def sample_user(db_session):
     return user
 
 
-# ✅ UT-01-CB: Test creating a user and retrieving them from the DB
+# UT-01-CB: Test creating a user and retrieving them from the DB
 def test_create_user(db_session):
     """Test ID: UT-01-CB - Create user and verify retrieval from DB."""
-    db_session.query(User).delete()  # ✅ Ensure clean state
+    db_session.query(User).delete()  # Ensure clean state
     db_session.commit()
 
     new_user = User(id=1, username="test", full_name="Test User", email="testuser@example.com",
@@ -58,7 +58,7 @@ def test_create_user(db_session):
     assert fetched_user.username == "test"
 
 
-# ✅ UT-02-CB: Test updating user height
+# UT-02-CB: Test updating user height
 def test_update_user(db_session, sample_user):
     """Test ID: UT-02-CB - Update user height."""
     sample_user.height = "6'0"
@@ -68,7 +68,7 @@ def test_update_user(db_session, sample_user):
     assert updated_user.height == "6'0"
 
 
-# ✅ UT-03-CB: Test updating user weight
+#  UT-03-CB: Test updating user weight
 def test_update_user_weight(db_session, sample_user):
     """Test ID: UT-03-CB - Update user weight."""
     sample_user.weight = "90kg"
@@ -78,7 +78,7 @@ def test_update_user_weight(db_session, sample_user):
     assert updated_user_weight.weight == "90kg"
 
 
-# ✅ UT-04-CB: Test saving a new exercise to user profile
+#  UT-04-CB: Test saving a new exercise to user profile
 def test_updateuser_saved_exercises(db_session, sample_user):
     """Test ID: UT-04-CB - Save exercise for user."""
 
@@ -100,18 +100,18 @@ def test_updateuser_saved_exercises(db_session, sample_user):
 
 
 
-# ✅ UT-05-OB: Test getting user data from DB and verifying returned values
+#  UT-05-OB: Test getting user data from DB and verifying returned values
 def test_get_user_data(db_session, sample_user):
     """Test ID: UT-05-OB - Fetch user data and validate returned values."""
     fetched_user = get_user_data(db_session, 1)
     assert fetched_user is not None
     assert fetched_user["username"] == "test"
 
-# ✅ IT-01: Integration Test - Save an exercise for a user
+#  IT-01: Integration Test - Save an exercise for a user
 def test_integration_user_saves_exercise(db_session, sample_user):
     """Test ID: IT-01 - Link user with an exercise via SavedExercise (User + Exercise)."""
 
-    # ✅ Clear out any previous exercises or links
+    #  Clear out any previous exercises or links
     db_session.query(SavedExercise).delete()
     db_session.query(Exercise).delete()
     db_session.commit()
@@ -131,7 +131,7 @@ def test_integration_user_saves_exercise(db_session, sample_user):
     assert result is not None
 
 
-# ✅ IT-02: Integration Test - Retrieve user and saved exercises
+#  IT-02: Integration Test - Retrieve user and saved exercises
 def test_integration_get_user_with_saved_exercises(db_session, sample_user):
     """Test ID: IT-02 - Retrieve a user along with their saved exercises."""
     db_session.query(SavedExercise).delete()
@@ -153,7 +153,7 @@ def test_integration_get_user_with_saved_exercises(db_session, sample_user):
     assert len(saved_exercises) > 0
     assert saved_exercises[0].exercise_id == exercise.id
 
-# ✅ IT-03: Integration Test - User saves multiple exercises
+#  IT-03: Integration Test - User saves multiple exercises
 def test_integration_user_saves_multiple_exercises(db_session, sample_user):
     """Test ID: IT-03 - Save and retrieve multiple exercises for a single user."""
     db_session.query(SavedExercise).delete()
@@ -177,7 +177,7 @@ def test_integration_user_saves_multiple_exercises(db_session, sample_user):
     assert len(results) == 2
     assert {res.exercise_id for res in results} == {ex1.id, ex2.id}
 
-# ✅ IT-04: Integration Test - Multiple users saving the same exercise
+# IT-04: Integration Test - Multiple users saving the same exercise
 def test_integration_multiple_users_save_same_exercise(db_session, sample_user):
     """Test ID: IT-04 - Ensure multiple users can save the same exercise."""
     db_session.query(SavedExercise).delete()
@@ -209,7 +209,7 @@ def test_integration_multiple_users_save_same_exercise(db_session, sample_user):
     assert sample_user.id in user_ids
     assert user2.id in user_ids
 
-# ✅ IT-05: Integration Test - Fetch multiple exercises by toughness
+#  IT-05: Integration Test - Fetch multiple exercises by toughness
 def test_integration_get_exercises_by_toughness_multiple(db_session):
     """Test ID: IT-05 - Retrieve multiple exercises by shared toughness level."""
     db_session.query(SavedExercise).delete()
@@ -232,7 +232,7 @@ def test_integration_get_exercises_by_toughness_multiple(db_session):
     assert "Push-ups" in names
     assert "Squats" in names
 
-# ✅ IT-06: Integration Test - Verify specific saved exercise exists for user
+#  IT-06: Integration Test - Verify specific saved exercise exists for user
 def test_integration_check_specific_saved_exercise(db_session, sample_user):
     """Test ID: IT-06 - Check if a specific saved exercise exists for a user."""
     db_session.query(SavedExercise).delete()
@@ -255,7 +255,7 @@ def test_integration_check_specific_saved_exercise(db_session, sample_user):
     assert exists is not None
     assert exists.exercise_id == 501
 
-# ✅ IT-07: Integration Test - Exercise update reflects for user who saved it
+# IT-07: Integration Test - Exercise update reflects for user who saved it
 def test_integration_updated_exercise_reflects_for_user(db_session, sample_user):
     """Test ID: IT-07 - Update an exercise and verify the changes reflect for user."""
     db_session.query(SavedExercise).delete()
@@ -285,7 +285,7 @@ def test_integration_updated_exercise_reflects_for_user(db_session, sample_user)
     assert link is not None
     assert link.exercise_id == updated.id
 
-# ✅ IT-08: Integration Test - Delete saved exercise for user
+# IT-08: Integration Test - Delete saved exercise for user
 def test_integration_delete_saved_exercise(db_session, sample_user):
     """Test ID: IT-08 - Remove a saved exercise and confirm it's deleted."""
     db_session.query(SavedExercise).delete()
@@ -310,7 +310,7 @@ def test_integration_delete_saved_exercise(db_session, sample_user):
     result = db_session.query(SavedExercise).filter_by(user_id=sample_user.id, exercise_id=exercise.id).first()
     assert result is None
 
-# ✅ ST-01: System Test - User registers, adds exercise, and saves it
+#  ST-01: System Test - User registers, adds exercise, and saves it
 def test_system_full_user_workout_flow(db_session):
     """Test ID: ST-01 - Full flow: register user, add exercise, and save it."""
 
@@ -342,7 +342,7 @@ def test_system_full_user_workout_flow(db_session):
     assert result.user_id == user.id
     assert result.exercise_id == exercise.id
 
-# ✅ ST-02: System Test - Save exercise and update user profile
+# ST-02: System Test - Save exercise and update user profile
 def test_system_user_saves_exercise_then_updates_profile(db_session):
     """Test ID: ST-02 - User saves an exercise, then updates their profile."""
 
@@ -380,7 +380,7 @@ def test_system_user_saves_exercise_then_updates_profile(db_session):
     saved_entry = db_session.query(SavedExercise).filter_by(user_id=user.id, exercise_id=exercise.id).first()
     assert saved_entry is not None
 
-# ✅ ST-03: System Test - Save multiple exercises, then delete one
+# ST-03: System Test - Save multiple exercises, then delete one
 def test_system_user_saves_and_deletes_one_exercise(db_session):
     """Test ID: ST-03 - User saves multiple exercises, then deletes one."""
 
@@ -417,7 +417,7 @@ def test_system_user_saves_and_deletes_one_exercise(db_session):
     assert len(remaining) == 1
     assert remaining[0].exercise_id == ex2.id
 
-# ✅ ST-04: System Test - Two users save different exercises and update profiles independently
+#  ST-04: System Test - Two users save different exercises and update profiles independently
 def test_system_two_users_save_and_update_independently(db_session):
     """Test ID: ST-04 - Two users save different exercises and update their profiles independently."""
 
@@ -463,7 +463,7 @@ def test_system_two_users_save_and_update_independently(db_session):
     assert saved1 is not None
     assert saved2 is not None
 
-# ✅ ST-05: System Test - User saves exercise, then exercise is updated
+#  ST-05: System Test - User saves exercise, then exercise is updated
 def test_system_user_sees_updated_exercise_info(db_session):
     """Test ID: ST-05 - Exercise is updated after being saved by user, and reflects correctly."""
 
@@ -501,7 +501,7 @@ def test_system_user_sees_updated_exercise_info(db_session):
     link = db_session.query(SavedExercise).filter_by(user_id=user.id, exercise_id=exercise.id).first()
     assert link is not None
 
-# ✅ ST-06: System Test - User deletion removes saved data
+#  ST-06: System Test - User deletion removes saved data
 def test_system_user_deletion_removes_saved_exercises(db_session):
     """Test ID: ST-06 - Deleting a user also removes their saved exercises."""
 
@@ -535,7 +535,7 @@ def test_system_user_deletion_removes_saved_exercises(db_session):
     remaining = db_session.query(SavedExercise).filter_by(user_id=user.id).all()
     assert len(remaining) == 0
 
-# ✅ ST-07: System Test - Admin adds exercise, users can view it
+#  ST-07: System Test - Admin adds exercise, users can view it
 def test_system_admin_adds_exercise_all_users_can_view(db_session):
     """Test ID: ST-07 - Admin creates an exercise, and it's visible to other users."""
 
@@ -564,7 +564,7 @@ def test_system_admin_adds_exercise_all_users_can_view(db_session):
     assert found is not None
     assert found.toughness == "Hard"
 
-# ✅ ST-08: System Test - Search exercises by tag
+#  ST-08: System Test - Search exercises by tag
 def test_system_user_searches_exercises_by_tag(db_session):
     """Test ID: ST-08 - User searches for exercises by a specific tag."""
 
