@@ -22,18 +22,12 @@ FlexFit is a fitness application designed to help users achieve a healthier life
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/devarshh/FlexFit_App.git
+   git clone https://github.com/CSCI2040U/FlexFit_App.git
     ```
 
-2. Open the project in Android Studio.
+2. Open the project in PyCharm or any IDE compatible.
 
-3. Sync the project with Gradle files by clicking on "Sync Now" in the top right corner after the project is loaded.
-
-4. Build and run the app on your emulator or physical device:
-   - Click on the "Run" button (green triangle) in Android Studio.
-   - Select your preferred device or emulator.
-
-5. Once the app is installed, you can start using it by creating a new user profile or logging in (if applicable).
+3. Follow the instructions on FlexFit_App/setup/README.md.
 
 ## Usage
 
