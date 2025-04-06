@@ -1,6 +1,6 @@
 # backend/schemas.py
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, Field
 from datetime import datetime
 from typing import Optional, List
 import json
@@ -34,6 +34,35 @@ class ExerciseSchema(BaseModel):
     tags: List[str]  # Ensure it's a list, JSON field should be converted
     suggested_reps: Optional[int]
 
+
+class ExerciseRequest(BaseModel):
+    name: str
+    description: str
+    toughness: str
+    tags: List[str]
+    media_url: Optional[str]
+    suggested_reps: Optional[int]
+
+class ExerciseUpdate(BaseModel):
+    name: Optional[str]
+    description: Optional[str]
+    suggested_reps: Optional[int]
+    toughness: Optional[str]
+    tags: Optional[List[str]]
+    media_url: Optional[str]
+
+
+class ExerciseResponse(BaseModel):
+    id: int
+    name: str
+    description: str
+    toughness: str
+    tags: List[str]
+    media_url: Optional[str]
+    suggested_reps: Optional[int]
+
+    class Config:
+        from_attributes = True
 
 class Config:
     from_attributes = True  # ✅ Updated for Pydantic V2
