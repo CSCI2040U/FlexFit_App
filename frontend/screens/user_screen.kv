@@ -125,13 +125,6 @@
                     pos_hint: {"center_x": 0.5}
 
                     MDRaisedButton:
-                        text: "Add Workout"
-                        md_bg_color: 0.2, 0.7, 0.2, 1
-                        size_hint_x: 0.8
-                        pos_hint: {"center_x": 0.5}
-                        on_release: app.switch_to_add_workout()
-
-                    MDRaisedButton:
                         text: "Logout"
                         md_bg_color: 0.8, 0.1, 0.1, 1
                         size_hint_x: 0.8
@@ -145,7 +138,6 @@
             pos_hint: {"bottom": 1}
             size_hint_y: 1/4
             radius: dp(10)
-            height: "10dp"
 
             MDBottomNavigationItem:
                 name: "home"
