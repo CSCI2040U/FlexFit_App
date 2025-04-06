@@ -336,8 +336,11 @@ class GuestHomeScreen(Screen):
         for workout in workouts:
             name = workout.get("name", "Unknown Workout")
             workout_id = workout.get("id", "Unknown ID")
+            image_url = workout.get("media_url",
+                                    "https://res.cloudinary.com/dudftatqj/image/upload/v1741316241/logo_iehkuj.png")
 
             item = OneLineAvatarIconListItem(text=name)
+            item.add_widget(ImageLeftWidget(source=image_url))
             item.workout_id = workout_id
 
             view_button = IconRightWidget(icon="arrow-right")
@@ -1302,7 +1305,6 @@ class MainApp(MDApp):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.user_info = {"birthdate": None, "gender": None, "height": None, "weight": None}
-        # self.saved_exercises = set()
 
     def __getattr__(self, name):
         print(f"🚨 Attempted to access: {name}")  # Debugging
@@ -1602,9 +1604,7 @@ class MainApp(MDApp):
 
     def delete_exercise(self, exercise_id):
         """Confirms and deletes the exercise."""
-        print(f"🚨 Function Reference Check: delete_exercise = {self.delete_exercise}")
 
-        # ✅ Define confirm_delete AFTER dialog
         def confirm_delete(instance):
             print(f"📌 Attempting to delete exercise with ID: {exercise_id}")
             url = f"http://127.0.0.1:8000/api/exercises/{exercise_id}"
@@ -1612,22 +1612,20 @@ class MainApp(MDApp):
 
             if response.status_code == 200:
                 print(f"✅ Exercise {exercise_id} deleted successfully!")
-                self.refresh_exercises()
+                self.switch_to_home()
             else:
                 print(f"❌ Error deleting exercise: {response.json()}")
 
-            dialog.dismiss()  # ✅ Ensure dialog is correctly defined before calling dismiss()
+            dialog.dismiss()
 
-        # ✅ Define dialog BEFORE calling confirm_delete
         dialog = MDDialog(
             title="Delete Exercise",
             text="Are you sure you want to delete this exercise?",
             buttons=[
-                MDRaisedButton(text="Yes", on_release=lambda _: confirm_delete(None)),  # ✅ Proper lambda
-                MDRaisedButton(text="No", on_release=lambda _: dialog.dismiss())  # ✅ Ensures dialog exists
+                MDRaisedButton(text="Yes", on_release=lambda _: confirm_delete(None)),
+                MDRaisedButton(text="No", on_release=lambda _: dialog.dismiss())
             ]
         )
-
         dialog.open()
 
     def refresh_exercises(self):
