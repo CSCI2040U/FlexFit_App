@@ -35,6 +35,12 @@
                 icon_color: 0, 0, 0, 1
                 on_release: root.open_filter_dropdown()
 
+            MDIconButton:
+                icon: "plus"
+                theme_icon_color: "Custom"
+                icon_color: "black"
+                on_release: app.switch_to_add_workout()
+
         ScrollView:
             MDList:
-                id: all_workouts_list
+                id: user_all_workouts_list
