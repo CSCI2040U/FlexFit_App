@@ -20,15 +20,8 @@ class User(Base):
     gender = Column(String)
     role = Column(String)
 
-    # Add this inside the class
+    # ✅ Add this inside the class
     progress_logs = relationship("ProgressLog", back_populates="user", cascade="all, delete-orphan")
-    saved_exercises = relationship(
-        "SavedExercise",
-        backref="user",
-        cascade="all, delete-orphan",
-        passive_deletes=True
-    )
-
 
 class Exercise(Base):
     __tablename__ = "exercises"
@@ -52,12 +45,12 @@ class ProgressLog(Base):
     height = Column(Float, nullable=True)
     weight = Column(Float, nullable=True)
 
-    #  Add this back-reference to the User model
+    # ✅ Add this back-reference to the User model
     user = relationship("User", back_populates="progress_logs")
 
 class SavedExercise(Base):
     __tablename__ = "saved_exercises"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id",ondelete="CASCADE"), nullable=False)
-    exercise_id = Column(Integer, ForeignKey("exercises.id",ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    exercise_id = Column(Integer, ForeignKey("exercises.id"), nullable=False)
