@@ -1,13 +1,20 @@
 import json
 import os
+from collections import Counter
+
+
+
+import multipart
 import requests
 from datetime import datetime
 from kivy.clock import Clock
 from kivy.factory import Factory
 from kivy.lang import Builder
-from kivy.properties import StringProperty
+from kivy.metrics import dp
+from kivy.properties import StringProperty, ListProperty
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.filechooser import FileChooserListView
 from kivy.uix.image import AsyncImage
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
@@ -15,10 +22,13 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.scrollview import ScrollView
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.button import MDRaisedButton, MDFlatButton
+from kivymd.uix.button import MDRaisedButton
+from kivy.uix.button import Button
 from kivymd.uix.card import MDCard
+from kivymd.uix.chip import MDChip
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.gridlayout import MDGridLayout
+from kivymd.uix.label import MDLabel
 from kivymd.uix.list import OneLineListItem, OneLineAvatarListItem, ImageLeftWidget, OneLineAvatarIconListItem, \
     IconRightWidget, IconLeftWidget, MDList
 from kivymd.uix.menu import MDDropdownMenu
@@ -28,7 +38,6 @@ from kivymd.uix.textfield import MDTextField
 
 from backend.database import get_user_data
 from backend.main import get_user_info
-from frontend.test import LoginScreen
 
 # ✅ Set Kivy to use ANGLE for OpenGL stability
 os.environ["KIVY_GL_BACKEND"] = "angle_sdl2"
@@ -282,8 +291,6 @@ class SignUpScreen(Screen):
     pass
 
 class GuestHomeScreen(Screen):
-<<<<<<< HEAD
-=======
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.selected_filters = set()
@@ -312,16 +319,16 @@ class GuestHomeScreen(Screen):
 
     def display_workouts(self, workouts):
         """Update the UI with workout list."""
-        all_workouts_list = self.ids.get("all_workouts_list", None)
+        guest_all_workouts_list = self.ids.get("guest_all_workouts_list", None)
 
-        if not all_workouts_list:
+        if not guest_all_workouts_list:
             print("🚨 ERROR: 'all_workouts_list' ID not found in all_workouts_screen.kv!")
             return
 
-        all_workouts_list.clear_widgets()  # ✅ Clear previous results
+        guest_all_workouts_list.clear_widgets()  # ✅ Clear previous results
 
         if not workouts:
-            all_workouts_list.add_widget(OneLineListItem(text="⚠️ No workouts found"))
+            guest_all_workouts_list.add_widget(OneLineListItem(text="⚠️ No workouts found"))
             return
 
         app = MDApp.get_running_app()
@@ -337,7 +344,7 @@ class GuestHomeScreen(Screen):
             view_button.bind(on_release=lambda btn, ex_id=workout_id: app.show_guest_exercise(ex_id))
 
             item.add_widget(view_button)
-            all_workouts_list.add_widget(item)
+            guest_all_workouts_list.add_widget(item)
 
     def on_search(self, instance, *args):
         """Fetch workouts dynamically based on user input."""
@@ -443,173 +450,100 @@ class GuestHomeScreen(Screen):
         # ✅ Update UI with filtered workouts
         self.display_workouts(filtered_workouts)
 
-
-class UserInfoScreen(Screen):
-    pass
-
-class HomeScreen(Screen):
-    pass
-
-class SavedScreen(Screen):
-    def on_pre_enter(self):
-        """Load saved exercises when switching to SavedScreen"""
-        print("🔄 Loading Saved Exercises...")
-        self.load_saved_exercises()
-
-    def load_saved_exercises(self, search_query=""):
-        """Populate saved exercises list with optional search functionality"""
-        exercise_list = self.ids.get("exercise_list", None)
-
-        if not exercise_list:
-            print("🚨 ERROR: 'exercise_list' ID not found in KV file!")
-            return
-
-        exercise_list.clear_widgets()
-
-        app = MDApp.get_running_app()
-        saved_exercises = app.saved_exercises
-
-        if not saved_exercises:
-            exercise_list.add_widget(OneLineListItem(text="⚠️ No saved exercises yet!"))
-            return
-
-        # ✅ Apply search filter
-        filtered_exercises = [
-            name for name in saved_exercises if search_query.lower() in name.lower()
-        ] if search_query else saved_exercises
-
-        if not filtered_exercises:
-            exercise_list.add_widget(OneLineListItem(text="⚠️ No matches found!"))
-            return
-
-        for name in filtered_exercises:
-            item = OneLineListItem(text=name)
-            exercise_list.add_widget(item)
-
-    def on_search(self, instance, search_text=""):
-        """Triggered when search text changes"""
-        print(f"🔍 Searching for: {search_text}")
-        self.load_saved_exercises(search_query=search_text)
-
-
-class UserScreen(Screen):
-    pass
-
-# ✅ Category Screens (Now Inheriting from ExerciseCategoryScreen)
-class WithEquipmentScreen(ExerciseCategoryScreen):
-    category_filter = StringProperty("with equipment")
-
-
-class WithoutEquipmentScreen(ExerciseCategoryScreen):
-    category_filter = StringProperty("without equipment")
-
-class OutdoorScreen(ExerciseCategoryScreen):
-    category_filter = StringProperty("outdoor")
-
-class WellnessScreen(ExerciseCategoryScreen):
-    category_filter = StringProperty("wellness")
-
 class AddWorkoutScreen(ExerciseCategoryScreen):
     selected_toughness = StringProperty("Easy")
+    selected_tags = ListProperty([])
+    selected_image_path = StringProperty("")
 
+    def upload_image_to_cloudinary(self):
+        print(f"[DEBUG UPLOAD] self = {self}, selected_image_path = {self.selected_image_path}")
+
+        if not self.selected_image_path:
+            print("⚠️ No image selected.")
+            return None
+
+        print(f"📸 Path to upload: {self.selected_image_path}")
+        url = "https://api.cloudinary.com/v1_1/dudftatqj/image/upload"
+        payload = {
+            "upload_preset": "flexfit_unsigned"
+        }
+        with open(self.selected_image_path, "rb") as img:
+            files = {"file": img}
+            res = requests.post(url, data=payload, files=files)
+
+        if res.status_code == 200:
+            uploaded_url = res.json()["secure_url"]
+            print(f"✅ Uploaded image URL: {uploaded_url}")
+            return uploaded_url
+        else:
+            print("❌ Image upload failed.")
+            return None
     def set_toughness(self, toughness):
         self.selected_toughness = toughness
         print(f"Toughness set to {self.selected_toughness}")
 
-class ExerciseDetailScreen(Screen):
-    exercise_id = StringProperty("")
-    exercise_name = StringProperty("")
-    exercise_description = StringProperty("")
-    exercise_tags = StringProperty("")
-    exercise_reps = StringProperty("")
-    exercise_toughness = StringProperty("")
-    exercise_image_url = StringProperty("")
-
-    def display_exercise(self, exercise_id):
-        """Fetch and display exercise details from the backend."""
-        self.exercise_id = str(exercise_id)
-        BASE_URL = "http://127.0.0.1:8000"
-        response = requests.get(f"{BASE_URL}/exercise/{exercise_id}")
-
-        if response.status_code == 200:
-            exercise_data = response.json()
-            print(f"📄 API Response: {exercise_data}")
-
-            # ✅ Since FastAPI now returns a list, join it properly
-            self.exercise_tags = ", ".join(exercise_data.get("tags", [])) if exercise_data.get(
-                "tags") else "No tags available"
-
-            self.exercise_name = exercise_data.get("name", "Unknown Exercise")
-            self.exercise_description = exercise_data.get("description", "No description available.")
-            self.exercise_reps = str(exercise_data.get("suggested_reps", "N/A"))
-            self.exercise_toughness = exercise_data.get("toughness", "Unknown")
-            self.exercise_image_url = exercise_data.get("image_url", "")
-
-            Clock.schedule_once(lambda dt: self.property_refresh(), 0)
-
+    def toggle_category(self, category):
+        if category in self.selected_tags:
+            self.selected_tags.remove(category)
+            print(f"❌ Removed tag: {category}")
         else:
-            print(f"❌ ERROR: Failed to fetch exercise. Status {response.status_code}")
-            print(f"⚠️ API Error Message: {response.text}")
+            self.selected_tags.append(category)
+            print(f"✅ Added tag: {category}")
 
-    def property_refresh(self):
-        """Manually refresh properties to update UI."""
-        self.property("exercise_name").dispatch(self)
-        self.property("exercise_description").dispatch(self)
-        self.property("exercise_tags").dispatch(self)
-        self.property("exercise_reps").dispatch(self)
-        self.property("exercise_toughness").dispatch(self)
-        self.property("exercise_image_url").dispatch(self)
+        print(f"Current selected tags: {self.selected_tags}")
 
-class GuestExerciseDetailScreen(Screen):
-    exercise_id = StringProperty("")
-    exercise_name = StringProperty("")
-    exercise_description = StringProperty("")
-    exercise_tags = StringProperty("")
-    exercise_reps = StringProperty("")
-    exercise_toughness = StringProperty("")
-    exercise_image_url = StringProperty("")
+    def select_image(self):
+        chooser = FileChooserListView(filters=["*.png", "*.jpg", "*.jpeg"])
+        selected_path_label = Label(text="No file selected", size_hint_y=None, height=dp(30))
+        select_button = Button(text="Confirm", size_hint_y=None, height=dp(40))
 
-    def display_exercise(self, exercise_id):
-        """Fetch and display exercise details from the backend."""
-        self.exercise_id = str(exercise_id)
-        BASE_URL = "http://127.0.0.1:8000"
-        response = requests.get(f"{BASE_URL}/exercise/{exercise_id}")
+        box = BoxLayout(orientation='vertical', spacing=10)
+        box.add_widget(chooser)
+        box.add_widget(selected_path_label)
+        box.add_widget(select_button)
 
-        if response.status_code == 200:
-            exercise_data = response.json()
-            print(f"📄 API Response: {exercise_data}")
+        popup = Popup(title="Select Image", content=box, size_hint=(0.9, 0.9))
 
-            # ✅ Since FastAPI now returns a list, join it properly
-            self.exercise_tags = ", ".join(exercise_data.get("tags", [])) if exercise_data.get(
-                "tags") else "No tags available"
+        def on_confirm_press(_):
+            selection = chooser.selection
+            if selection:
+                self.selected_image_path = selection[0]
+                print(f"✅ Selected image: {self.selected_image_path}")
+                print(f"[DEBUG SELECT] self = {self}, selected_image_path = {self.selected_image_path}")
+                selected_path_label.text = f"Selected: {os.path.basename(self.selected_image_path)}"
+                popup.dismiss()
+            else:
+                selected_path_label.text = "⚠️ Please select an image file first"
 
-            self.exercise_name = exercise_data.get("name", "Unknown Exercise")
-            self.exercise_description = exercise_data.get("description", "No description available.")
-            self.exercise_reps = str(exercise_data.get("suggested_reps", "N/A"))
-            self.exercise_toughness = exercise_data.get("toughness", "Unknown")
-            self.exercise_image_url = exercise_data.get("image_url", "")
+        select_button.bind(on_press=on_confirm_press)
+        popup.open()
 
-            Clock.schedule_once(lambda dt: self.property_refresh(), 0)
+    def submit_workout(self):
+        media_url = self.upload_image_to_cloudinary()
 
-        else:
-            print(f"❌ ERROR: Failed to fetch exercise. Status {response.status_code}")
-            print(f"⚠️ API Error Message: {response.text}")
+        workout_data = {
+            "name": self.ids.workout_name.text,
+            "description": self.ids.workout_description.text,
+            "toughness": self.selected_toughness,
+            "tags": self.selected_tags,
+            "media_url": media_url,
+            "suggested_reps": int(self.ids.workout_reps.text or "12")
+        }
 
-    def property_refresh(self):
-        """Manually refresh properties to update UI."""
-        self.property("exercise_name").dispatch(self)
-        self.property("exercise_description").dispatch(self)
-        self.property("exercise_tags").dispatch(self)
-        self.property("exercise_reps").dispatch(self)
-        self.property("exercise_toughness").dispatch(self)
-        self.property("exercise_image_url").dispatch(self)
+        print(f"📤 Submitting workout: {workout_data}")
 
+        try:
+            res = requests.post("http://127.0.0.1:8000/add_exercise/", json=workout_data)
+            if res.status_code == 200:
+                print(f"✅ Workout added successfully!")
+                print(f"📥 API Response: {res.status_code}, {res.json()}")
+            else:
+                print(f"❌ Failed to add workout. Code: {res.status_code}, Response: {res.text}")
+        except Exception as e:
+            print(f"🔥 Error during workout submission: {e}")
 
-class FilterDialogContent(MDBoxLayout):
-    pass
 
 class AllWorkoutsScreen(Screen):
->>>>>>> 2e00a35 (build scripts done and guest feature done)
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.selected_filters = set()
@@ -638,16 +572,16 @@ class AllWorkoutsScreen(Screen):
 
     def display_workouts(self, workouts):
         """Update the UI with workout list."""
-        all_workouts_list = self.ids.get("all_workouts_list", None)
+        user_all_workouts_list = self.ids.get("user_all_workouts_list", None)
 
-        if not all_workouts_list:
+        if not user_all_workouts_list:
             print("🚨 ERROR: 'all_workouts_list' ID not found in all_workouts_screen.kv!")
             return
 
-        all_workouts_list.clear_widgets()  # ✅ Clear previous results
+        user_all_workouts_list.clear_widgets()  # ✅ Clear previous results
 
         if not workouts:
-            all_workouts_list.add_widget(OneLineListItem(text="⚠️ No workouts found"))
+            user_all_workouts_list.add_widget(OneLineListItem(text="⚠️ No workouts found"))
             return
 
         app = MDApp.get_running_app()
@@ -655,15 +589,24 @@ class AllWorkoutsScreen(Screen):
         for workout in workouts:
             name = workout.get("name", "Unknown Workout")
             workout_id = workout.get("id", "Unknown ID")
+            image_url = workout.get("media_url",
+                                     "https://res.cloudinary.com/dudftatqj/image/upload/v1741316241/logo_iehkuj.png")
 
             item = OneLineAvatarIconListItem(text=name)
+            item.add_widget(ImageLeftWidget(source=image_url))
             item.workout_id = workout_id
 
             view_button = IconRightWidget(icon="arrow-right")
-            view_button.bind(on_release=lambda btn, ex_id=workout_id: app.show_guest_exercise(ex_id))
+            view_button.bind(on_release=lambda btn, ex_id=workout_id: app.show_exercise(ex_id))
+
+            edit_button = IconRightWidget(icon = "pencil")
+            edit_button.bind(on_release = lambda btn, ex_id = workout_id: app.edit_workout(ex_id))
+
+            icon_name = "bookmark" if name in app.saved_exercises else "bookmark-outline"
 
             item.add_widget(view_button)
-            all_workouts_list.add_widget(item)
+            item.add_widget(edit_button)
+            user_all_workouts_list.add_widget(item)
 
     def on_search(self, instance, *args):
         """Fetch workouts dynamically based on user input."""
@@ -866,13 +809,6 @@ class OutdoorScreen(ExerciseCategoryScreen):
 class WellnessScreen(ExerciseCategoryScreen):
     category_filter = StringProperty("wellness")
 
-class AddWorkoutScreen(ExerciseCategoryScreen):
-    selected_toughness = StringProperty("Easy")
-
-    def set_toughness(self, toughness):
-        self.selected_toughness = toughness
-        print(f"Toughness set to {self.selected_toughness}")
-
 class ExerciseDetailScreen(Screen):
     exercise_id = StringProperty("")
     exercise_name = StringProperty("")
@@ -916,6 +852,27 @@ class ExerciseDetailScreen(Screen):
         self.property("exercise_reps").dispatch(self)
         self.property("exercise_toughness").dispatch(self)
         self.property("exercise_image_url").dispatch(self)
+
+
+    def log_workout_completion(self):
+        app = MDApp.get_running_app()
+        user_id = app.user_info.get("id")
+        exercise_id = self.exercise_id  # Make sure you're storing this in your class when showing workout detail
+
+        if not user_id or not exercise_id:
+            print("🚨 Missing user or exercise ID")
+            return
+
+        try:
+            response = requests.post(
+                f"http://127.0.0.1:8000/log_workout/{user_id}/{exercise_id}"
+            )
+            if response.status_code == 200:
+                print("✅ Workout logged successfully")
+            else:
+                print(f"❌ Failed to log workout: {response.status_code}, {response.text}")
+        except Exception as e:
+            print(f"🚨 ERROR logging workout: {e}")
 
 class GuestExerciseDetailScreen(Screen):
     exercise_id = StringProperty("")
@@ -965,173 +922,112 @@ class GuestExerciseDetailScreen(Screen):
 class FilterDialogContent(MDBoxLayout):
     pass
 
-class AllWorkoutsScreen(Screen):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.selected_filters = set()
-        self.menu = None  # ✅ Initialize menu
+class EditWorkoutScreen(ExerciseCategoryScreen):
+    exercise_id = StringProperty("")
+    selected_image_path = StringProperty("")  # ✅ Add this line
+    selected_tags = ListProperty([])          # ✅ Optional: add this if using category/tag selection
+    selected_toughness = StringProperty("Easy")
 
-    def on_pre_enter(self):
-        """Load all workouts initially."""
-        Clock.schedule_once(lambda dt: self.load_workouts(""), 0.1)
-
-    def load_workouts(self, search_query=""):
-        """Fetch workouts dynamically based on search input."""
-        search_query = search_query.strip().lower()
-        workouts = ExerciseAPI.fetch_exercises()  # ✅ Fetch all exercises from API
-
-        if not workouts:
-            print("⚠️ No workouts found from API")
-            self.display_workouts([])
-            return
-
-        # ✅ Only filter on API response (no in-memory storage)
-        filtered_workouts = [
-            workout for workout in workouts if search_query in workout["name"].lower()
-        ]
-
-        self.display_workouts(filtered_workouts)
-
-    def display_workouts(self, workouts):
-        """Update the UI with workout list."""
-        all_workouts_list = self.ids.get("all_workouts_list", None)
-
-        if not all_workouts_list:
-            print("🚨 ERROR: 'all_workouts_list' ID not found in all_workouts_screen.kv!")
-            return
-
-        all_workouts_list.clear_widgets()  # ✅ Clear previous results
-
-        if not workouts:
-            all_workouts_list.add_widget(OneLineListItem(text="⚠️ No workouts found"))
-            return
-
-        app = MDApp.get_running_app()
-
-        for workout in workouts:
-            name = workout.get("name", "Unknown Workout")
-            workout_id = workout.get("id", "Unknown ID")
-
-            item = OneLineAvatarIconListItem(text=name)
-            item.workout_id = workout_id
-
-            view_button = IconRightWidget(icon="arrow-right")
-            view_button.bind(on_release=lambda btn, ex_id=workout_id: app.show_exercise(ex_id))
-
-            # delete_button = IconRightWidget(icon="trash-can")
-            # delete_button.bind(on_release=lambda btn, ex_id=workout_id: app.delete_exercise(ex_id))
-
-            item.add_widget(view_button)
-            # item.add_widget(delete_button)
-            all_workouts_list.add_widget(item)
-
-    def on_search(self, instance, *args):
-        """Fetch workouts dynamically based on user input."""
-        search_text = instance.text.strip()  # ✅ Extract text properly
-        Clock.schedule_once(lambda dt: self.load_workouts(search_text), 0.1)  # ✅ Debounce search
-
-    def open_filter_dropdown(self):
-        """Open the filter dropdown menu safely without unpacking errors."""
-
-        filters = ["with equipment", "without equipment", "outdoor", "wellness"]
-
-        menu_items = [
-            {
-                "text": filter_name,
-                "viewclass": "OneLineListItem",
-                "on_release": lambda f=filter_name: self.toggle_filter(f), # ✅ Assign filter properly
-                "md_bg_color": (0.2, 0.6, 1, 1) if filter_name in self.selected_filters else (0.8, 0.8, 0.8, 1)
-            }
-            for filter_name in filters
-        ]
-
-        # ✅ Debugging: Check if menu_items is correctly populated
-        if not menu_items:
-            print("🚨 ERROR: menu_items is empty!")
-
-        self.menu = MDDropdownMenu(
-            caller=self.ids.filter_button,  # ✅ Ensure this button ID exists in the KV file
-            items=menu_items,
-            width_mult=4
-        )
-
-        self.menu.open()
-
-    def toggle_filter(self, filter_name):
-        """Toggle filter buttons and update UI color based on selection."""
-
-        # ✅ Ensure selected_filters is initialized
-        if self.selected_filters is None:
-            self.selected_filters = set()
-
-        # ✅ Toggle filter state
-        if filter_name in self.selected_filters:
-            self.selected_filters.remove(filter_name)
-            print(f"❌ Removed Filter: {filter_name}")
+    def load_exercise_data(self, exercise_id):
+        self.exercise_id = exercise_id
+        response = requests.get(f"http://127.0.0.1:8000/exercise/{exercise_id}")
+        if response.status_code == 200:
+            data = response.json()
+            self.ids.workout_name.text = data.get("name", "")
+            self.ids.workout_description.text = data.get("description", "")
+            self.ids.workout_reps.text = str(data.get("suggested_reps", ""))
+            self.selected_toughness = data.get("toughness", "Easy")
+            self.selected_tags = data.get("tags", [])
+            self.selected_image_path = data.get("media_url", "")
         else:
-            self.selected_filters.add(filter_name)
-            print(f"✅ Added Filter: {filter_name}")
+            print("❌ Failed to load exercise details")
 
-        # ✅ Debugging Output
-        print(f"📌 Current Filters: {self.selected_filters}")
+    def upload_image_to_cloudinary(self):
+        if not self.selected_image_path:
+            print("⚠️ No image selected.")
+            return None
 
-        # ✅ Apply filter changes immediately
-        self.apply_filter()
+        print(f"📸 Path to upload: {self.selected_image_path}")
+        url = "https://api.cloudinary.com/v1_1/dudftatqj/image/upload"
+        payload = {
+            "upload_preset": "flexfit_unsigned"
+        }
+        with open(self.selected_image_path, "rb") as img:
+            files = {"file": img}
+            res = requests.post(url, data=payload, files=files)
 
-    def apply_filter(self):
-        """Apply the selected filters and update the workout list."""
-        print(f"🎯 Applying Filters: {self.selected_filters}")
+        if res.status_code == 200:
+            uploaded_url = res.json()["secure_url"]
+            print(f"✅ Uploaded image URL: {uploaded_url}")
+            return uploaded_url
+        else:
+            print("❌ Image upload failed.")
+            return None
 
-        # ✅ Fetch all workouts
-        all_workouts = ExerciseAPI.fetch_exercises()
+    def select_image(self):
+        chooser = FileChooserListView(filters=["*.png", "*.jpg", "*.jpeg"])
+        selected_path_label = Label(text="No file selected", size_hint_y=None, height=dp(30))
+        select_button = Button(text="Confirm", size_hint_y=None, height=dp(40))
 
-        if not all_workouts:
-            print("⚠️ No workouts fetched from API")
-            self.display_workouts([])
-            return
+        box = BoxLayout(orientation='vertical', spacing=10)
+        box.add_widget(chooser)
+        box.add_widget(selected_path_label)
+        box.add_widget(select_button)
 
-        # ✅ Normalize selected filters (convert to lowercase)
-        normalized_filters = {filter.lower() for filter in self.selected_filters}
-        print(f"🛠️ Normalized Filters: {normalized_filters}")
+        popup = Popup(title="Select Image", content=box, size_hint=(0.9, 0.9))
 
-        # ✅ Debug: Print how tags are stored in the API response
-        for workout in all_workouts[:5]:  # Print first 5 workouts only
-            print(f"📌 API Workout: {workout['name']}, Tags: {workout.get('tags', 'N/A')}")
+        def on_confirm_press(_):
+            selection = chooser.selection
+            if selection:
+                self.selected_image_path = selection[0]
+                print(f"✅ Selected image: {self.selected_image_path}")
+                selected_path_label.text = f"Selected: {os.path.basename(self.selected_image_path)}"
+                popup.dismiss()
+            else:
+                selected_path_label.text = "⚠️ Please select an image file first"
 
-        # ✅ If no filters are selected, show all workouts
-        if not self.selected_filters:
-            self.display_workouts(all_workouts)
-            return
+        select_button.bind(on_press=on_confirm_press)
+        popup.open()
 
-        # ✅ Fix Filtering Logic (Convert API Tags to lowercase)
-        filtered_workouts = []
-        for workout in all_workouts:
-            workout_tags = workout.get("tags", [])
+    def toggle_category(self, category):
+        if category in self.selected_tags:
+            self.selected_tags.remove(category)
+            print(f"❌ Removed tag: {category}")
+        else:
+            self.selected_tags.append(category)
+            print(f"✅ Added tag: {category}")
 
-            # ✅ Ensure tags are a **list** and convert to lowercase
-            if isinstance(workout_tags, str):
-                try:
-                    workout_tags = json.loads(workout_tags)  # Convert string to list
-                except json.JSONDecodeError:
-                    workout_tags = []
+        print(f"Current selected tags: {self.selected_tags}")
 
-            workout_tags = {tag.lower() for tag in workout_tags}  # ✅ Convert tags to lowercase
+    def set_toughness(self, toughness):
+        self.selected_toughness = toughness
+        print(f"Toughness set to {self.selected_toughness}")
 
-            print(f"🔹 Checking: {workout['name']} -> Tags: {workout_tags}")
+    def submit_edit(self):
+        image_url = self.upload_image_to_cloudinary() or self.selected_image_path
 
-            # ✅ Check if at least one normalized filter is in workout tags
-            if normalized_filters.intersection(workout_tags):
-                filtered_workouts.append(workout)
+        updated_data = {
+            "name": self.ids.workout_name.text,
+            "description": self.ids.workout_description.text,
+            "toughness": self.selected_toughness,
+            "tags": self.selected_tags,
+            "media_url": image_url,
+            "suggested_reps": int(self.ids.workout_reps.text or "12")
+        }
 
-        # ✅ Debugging Output
-        print(f"📌 Displaying {len(filtered_workouts)} workouts after filtering")
+        print("🧾 Payload sent to backend:", updated_data)
 
-        # ✅ Update UI with filtered workouts
-        self.display_workouts(filtered_workouts)
+        response = requests.put(f"http://127.0.0.1:8000/edit_exercise/{self.exercise_id}", json=updated_data)
+
+        if response.status_code == 200:
+            print("✅ Workout updated successfully")
+            MDApp.get_running_app().switch_to_home()
+        else:
+            print(f"❌ Failed to update workout: {response.text}")
+
 
 import matplotlib.pyplot as plt
 from io import BytesIO
-import base64
 from kivy.uix.image import Image
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.dialog import MDDialog
@@ -1141,6 +1037,7 @@ from kivy.core.image import Image as CoreImage
 class ProgressScreen(Screen):
     def on_enter(self):
         self.load_progress_logs()
+        self.load_achievements()
 
     def log_progress(self):
         app = MDApp.get_running_app()
@@ -1152,6 +1049,17 @@ class ProgressScreen(Screen):
             print("⚠️ Fill both height and weight")
             return
 
+        # Fetch and print current streak
+        try:
+            streak_response = requests.get(f"http://127.0.0.1:8000/streak/{user_id}")
+            if streak_response.status_code == 200:
+                streak = streak_response.json().get("streak", 0)
+                print(f"🔥 Current streak: {streak} days")
+                self.ids.streak_label.text = f"🔥 Current Streak: {streak} Days"
+        except Exception as e:
+            print(f"🚨 Failed to fetch streak: {e}")
+
+
         try:
             response = requests.post(
                 f"http://127.0.0.1:8000/progress/{user_id}",
@@ -1159,13 +1067,23 @@ class ProgressScreen(Screen):
             )
             if response.status_code == 200:
                 print("✅ Progress logged")
+
+
+                # 🔥 Trigger streak update
+                streak_response = requests.post(f"http://127.0.0.1:8000/streak/{user_id}")
+                if streak_response.status_code == 200:
+                    streak_data = streak_response.json()
+                    print(f"🔥 Streak updated: {streak_data.get('streak')} days")
+
                 self.ids.height_input.text = ""
                 self.ids.weight_input.text = ""
                 self.load_progress_logs()
             else:
                 print(f"❌ Failed to log progress: {response.text}")
         except Exception as e:
+            print(f"🚨 ERROR: {e}")
             print(f"🚨 ERROR logging progress: {e}")
+
 
     def load_progress_logs(self):
         app = MDApp.get_running_app()
@@ -1217,12 +1135,24 @@ class ProgressScreen(Screen):
 
             for h, w in zip(heights, weights):
                 try:
+                    height_m = h / 100
                     height_m = h / 100  # convert to meters
                     bmi = w / (height_m ** 2)
                     bmis.append(round(bmi, 2))
                 except:
                     bmis.append(None)
 
+            # Plotting
+            plt.figure(figsize=(12, 6))
+            plt.plot(dates, heights, marker='o', label="Height (cm)")
+            plt.plot(dates, weights, marker='o', label="Weight (kg)")
+            plt.plot(dates, bmis, marker='o', linestyle='--', label="BMI")
+
+            plt.title("📈 Progress Over Time", fontsize=16, fontweight='bold')
+            plt.xlabel("Date", fontsize=12)
+            plt.ylabel("Values", fontsize=12)
+            plt.xticks(rotation=45)
+            plt.grid(True, linestyle='--', alpha=0.6)
             # Plotting graphs
             plt.figure(figsize=(10, 6))
             plt.plot(dates, heights, marker='o', label="Height (cm)")
@@ -1234,10 +1164,11 @@ class ProgressScreen(Screen):
             plt.xticks(rotation=45)
             plt.legend()
             plt.tight_layout()
-
             buf = BytesIO()
             plt.savefig(buf, format='png')
             buf.seek(0)
+            plt.close()
+
 
             core_image = CoreImage(buf, ext='png')
             image = Image(texture=core_image.texture)
@@ -1248,6 +1179,93 @@ class ProgressScreen(Screen):
         except Exception as e:
             print(f"🚨 ERROR showing graphs: {e}")
 
+    def show_completed_workouts_graph(self):
+        app = MDApp.get_running_app()
+        user_id = app.user_info.get("id")
+
+        try:
+            # Fetch workout logs
+            response = requests.get(f"http://127.0.0.1:8000/workout_logs/{user_id}")
+            if response.status_code != 200:
+                print(f"❌ Failed to fetch workout logs: {response.text}")
+                return
+
+            logs = response.json()
+            if not logs:
+                print("⚠️ No workout logs found.")
+                return
+
+            # Count each exercise_id
+            counter = Counter([entry["exercise_id"] for entry in logs])
+
+            # Map exercise_id to name
+            exercise_map = {
+                ex["id"]: ex["name"]
+                for ex in ExerciseAPI.fetch_exercises()
+            }
+
+            names = [exercise_map.get(ex_id, f"Exercise {ex_id}") for ex_id in counter.keys()]
+            counts = list(counter.values())
+
+            # Create bar chart
+            plt.figure(figsize=(12, 6))
+            plt.bar(names, counts)
+            plt.xlabel("Exercise")
+            plt.ylabel("Times Completed")
+            plt.title("Workout Completion Count")
+            plt.xticks(rotation=45, ha="right")
+            plt.tight_layout()
+
+            # Save to buffer
+            buf = BytesIO()
+            plt.savefig(buf, format='png')
+            buf.seek(0)
+            plt.close()
+
+            # Show image in popup
+            image = CoreImage(buf, ext="png")
+            img_widget = Image(texture=image.texture, size_hint_y=None, height="400dp")
+            box = MDBoxLayout(orientation='vertical', padding=10)
+            box.add_widget(img_widget)
+
+            self.graph_popup = MDDialog(
+                title="Completed Workouts",
+                type="custom",
+                content_cls=box,
+                buttons=[]
+            )
+            self.graph_popup.open()
+
+        except Exception as e:
+            print(f"🚨 Error showing graph: {e}")
+
+    def load_achievements(self):
+        app = MDApp.get_running_app()
+        user_id = app.user_info.get("id")
+        try:
+            response = requests.get(f"http://127.0.0.1:8000/achievements/{user_id}")
+            if response.status_code == 200:
+                data = response.json()
+                achievements = data.get("achievements", [])
+
+                container = self.ids.achievement_box
+                container.clear_widgets()
+
+                if achievements:
+                    for badge in achievements:
+                        chip = MDChip(
+                            label=badge,
+                            icon="star-circle-outline",
+                            check=False
+                        )
+                        container.add_widget(chip)
+                else:
+                    container.add_widget(MDLabel(text="No achievements yet!", halign="center"))
+
+            else:
+                print(f"❌ Failed to fetch achievements: {response.status_code}")
+        except Exception as e:
+            print(f"🚨 Error fetching achievements: {e}")
 
 # ✅ Register Screens in Factory
 Factory.register("ClickableCard", cls=ClickableCard)
@@ -1268,10 +1286,8 @@ Factory.register("OutdoorScreen", cls=OutdoorScreen)
 Factory.register("WellnessScreen", cls=WellnessScreen)
 Factory.register("ExerciseDetailScreen", cls=ExerciseDetailScreen)
 Factory.register("GuestExerciseDetailScreen", cls=GuestExerciseDetailScreen)
-<<<<<<< HEAD
 Factory.register("ProgressScreen", cls=ProgressScreen)
-=======
->>>>>>> 2e00a35 (build scripts done and guest feature done)
+Factory.register("EditWorkoutScreen", cls=EditWorkoutScreen)
 
 # ✅ Load all KV Files Dynamically
 KV_DIR = "screens"
@@ -1304,6 +1320,7 @@ class MainApp(MDApp):
         self.sm.add_widget(AddWorkoutScreen(name="add_workout"))
         self.sm.add_widget(GuestHomeScreen(name="guest"))
         self.sm.add_widget(ProgressScreen(name="progress"))
+        self.sm.add_widget(EditWorkoutScreen(name="edit_workout"))
 
 
         # ✅ Add screens for each workout category
@@ -1492,22 +1509,9 @@ class MainApp(MDApp):
             print(f"🚨 ERROR during logout: {e}")
 
     def edit_workout(self, exercise_id):
-        self.dialog = MDDialog(
-            title="Edit Workout",
-            type="custom",
-            content_cls = MDTextField(hint_text="Enter New Workout Name"),
-            buttons=[
-                MDRaisedButton(
-                    text="Save",
-                    on_release=lambda _: self.confirm_edit_workout(exercise_id)
-                ),
-                MDRaisedButton(
-                    text="Cancel",
-                    on_release=lambda _: self.dialog.dismiss()
-                )
-            ]
-        )
-        self.dialog.open()
+        screen = self.root.get_screen("edit_workout")
+        screen.load_exercise_data(str(exercise_id))  # ✅ Force it to be a string
+        self.root.current = "edit_workout"
 
     def edit_height(self):
         self.dialog = MDDialog(
@@ -1683,32 +1687,45 @@ class MainApp(MDApp):
         self.switch_to_screen("add_workout")
 
     def submit_workout(self):
-        screen = self.sm.get_screen("add_workout")
+        screen = self.root.get_screen("add_workout")
 
-        tag_input_widget = screen.ids.workout_tags
-        tag_text = tag_input_widget.text.strip()
+        print(f"📸 Path to upload: {screen.selected_image_path}")
 
-        tags_list = [tag.strip() for tag in tag_text.split(",") if tag.strip()] if tag_text else []
+        # ✅ Upload the image
+        image_url = screen.upload_image_to_cloudinary()
+        if not image_url:
+            image_url = "https://res.cloudinary.com/dudftatqj/image/upload/v1741316241/logo_iehkuj.png"
 
-        workout_data = {
-            "name": screen.ids.workout_name.text,
-            "description": screen.ids.workout_description.text,
-            "toughness": screen.selected_toughness,
-            "tags": tags_list,
-            "suggested_reps": int(screen.ids.workout_reps.text) if screen.ids.workout_reps.text.isdigit() else 10
-        }
+        # ✅ Build the workout data
+        try:
+            workout_data = {
+                "name": screen.ids.workout_name.text.strip(),
+                "description": screen.ids.workout_description.text.strip(),
+                "toughness": screen.selected_toughness,
+                "tags": screen.selected_tags,
+                "media_url": image_url,
+                "suggested_reps": int(screen.ids.workout_reps.text) if screen.ids.workout_reps.text.isdigit() else 10
+            }
+        except Exception as e:
+            print(f"❌ Failed to build workout data: {e}")
+            return
 
-        print(f"📤 Submitting workout: {workout_data}")  # ✅ Print the request payload
+        print(f"📤 Submitting workout: {workout_data}")
+        print(f"🧾 Final Payload Sent:\n{json.dumps(workout_data, indent=2)}")
 
-        response = requests.post("http://127.0.0.1:8000/add_exercise/", json=workout_data)
-
-        print(f"📥 API Response: {response.status_code}, {response.text}")  # ✅ Print the API response
+        # ✅ Send to backend
+        try:
+            response = requests.post("http://127.0.0.1:8000/add_exercise/", json=workout_data)
+            print(f"📥 API Response: {response.status_code}, {response.text}")
+        except Exception as e:
+            print(f"❌ Could not reach backend: {e}")
+            return
 
         if response.status_code == 200:
             print("✅ Workout added successfully!")
             self.root.current = "user"
         else:
-            print(f"❌ Error adding workout: {response.json()}")  # ✅ Print the error message
+            print(f"❌ Error adding workout: {response.json()}")
 
 
 if __name__ == "__main__":
