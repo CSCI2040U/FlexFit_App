@@ -60,6 +60,11 @@
             pos_hint: {"center_x": 0.5}
 
             MDRaisedButton:
+                text: "Log as Completed"
+                pos_hint: {"center_x": 0.5}
+                on_release: root.log_workout_completion()
+
+            MDRaisedButton:
                 text: "Delete Workout"
                 md_bg_color: 0.8, 0.1, 0.1, 1
                 size_hint_x: 0.8
@@ -71,4 +76,4 @@
                 md_bg_color: 0.2, 0.7, 0.2, 1
                 size_hint_x: 0.8
                 pos_hint: {"center_x": 0.5}
-                on_release: app.switch_to_home()
+                on_release: app.switch_to_screen("home")
