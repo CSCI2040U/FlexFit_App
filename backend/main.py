@@ -1,12 +1,16 @@
+import os
 import traceback
+from typing import Optional, List
 
-from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi import FastAPI, Depends, HTTPException, Query, File, UploadFile, Body
+import cloudinary
+import cloudinary.uploader
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal, engine, get_user_data, ExerciseCreate, get_exercise_by_id
 from backend.models import Base, Exercise, User, SavedExercise, ProgressLog
 from backend.routes import exercises
-from backend.schemas import UserCreate, LoginRequest
+from backend.schemas import UserCreate, LoginRequest, ExerciseRequest, ExerciseUpdate, ExerciseResponse
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import json
@@ -26,6 +30,14 @@ app = FastAPI(
         }
     ]
 )
+
+cloudinary.config(
+    cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key = os.getenv("CLOUDINARY_API_KEY"),
+    api_secret = os.getenv("CLOUDINARY_API_SECRET"),
+)
+
+
 # Secret key for encoding and decoding JWT tokens
 SECRET_KEY = "your_secret_key"  # Change this to a secure random key
 ALGORITHM = "HS256"
@@ -70,48 +82,27 @@ def get_db():
         db.close()
 
 @app.post("/add_exercise/")
-def add_exercise(exercise: dict, db: Session = Depends(get_db)):
-    """Adds a new exercise to the database with debugging logs."""
-    try:
-        print(f"📌 Received Exercise Data: {exercise}")  # ✅ Log received data
+def add_exercise(exercise: ExerciseRequest, db: Session = Depends(get_db)):
+    print("🔥 ADD_EXERCISE route loaded")
+    print("📦 Exercise payload:", exercise)
 
-        # Ensure required fields exist
-        required_fields = ["name", "description", "toughness", "tags"]
-        for field in required_fields:
-            if field not in exercise:
-                raise HTTPException(status_code=400, detail=f"{field} is required")
+    default_image_url = "https://res.cloudinary.com/dudftatqj/image/upload/v1741316241/logo_iehkuj.png"
+    media_url = exercise.media_url or default_image_url
 
-        if isinstance(exercise.get("tags"), list):
-            tags_json = json.dumps(exercise["tags"])  # Convert to string
-        elif isinstance(exercise.get("tags"), str):
-            tags_json = exercise["tags"]  # Already a valid JSON string
-        else:
-            tags_json = "[]"  # Default to empty list if invalid
+    new_exercise = Exercise(
+        name=exercise.name,
+        description=exercise.description,
+        toughness=exercise.toughness,
+        media_url=media_url,
+        tags=json.dumps(exercise.tags),
+        suggested_reps=exercise.suggested_reps
+    )
 
-        # Set default image URL if media_url is not provided
-        default_image_url = "https://res.cloudinary.com/dudftatqj/image/upload/v1741316241/logo_iehkuj.png"
-        media_url = exercise.get("media_url", default_image_url)  # ✅ Assign default if missing
+    db.add(new_exercise)
+    db.commit()
+    db.refresh(new_exercise)
 
-        # ✅ Create new exercise
-        new_exercise = Exercise(
-            name=exercise["name"],
-            description=exercise["description"],
-            toughness=exercise["toughness"],
-            media_url=media_url,
-            tags=tags_json,
-            suggested_reps=exercise.get("suggested_reps", 10)  # Default to 10 reps
-        )
-
-        db.add(new_exercise)
-        db.commit()
-        db.refresh(new_exercise)
-
-        print(f"✅ Successfully Added Exercise: {new_exercise}")  # ✅ Debug Success
-        return {"message": "Exercise added successfully", "exercise_id": new_exercise.id, "media_url": media_url}
-
-    except Exception as e:
-        print(f"🚨 ERROR: {e}")  # ✅ Debugging
-        raise HTTPException(status_code=500, detail=str(e))  # Return actual error
+    return {"message": "Exercise added successfully", "exercise_id": new_exercise.id}
 
 
 # Login route to authenticate users and return a JWT token
@@ -251,30 +242,13 @@ def get_exercises(
 
     return exercises_list if exercises_list else {"error": "No exercises found"}
 
-
-class ExerciseUpdate(BaseModel):
-    name: str
-    # description: str
-    # toughness: str
-    # media_url: str
-    # tags: str
-    # suggested_reps: int
-
-# class UserUpdate(BaseModel):
-#     # username: str
-#     # full_name: str
-#     # email: str
-#     # password: str
-#     # height: int
-#     # weight: int
-
 @app.get("/exercise/{exercise_id}")
 def get_exercise(exercise_id: int, db: Session = Depends(get_db)):
     try:
         exercise = get_exercise_by_id(db, exercise_id)
         if not exercise:
             raise HTTPException(status_code=404, detail="Exercise not found")
-            # return {"error": "Exercise not found"}
+
 
         try:
             tags_list = json.loads(exercise.tags) if exercise.tags else []
@@ -294,18 +268,36 @@ def get_exercise(exercise_id: int, db: Session = Depends(get_db)):
         print(traceback.format_exc())  # ✅ This will show the full error in logs
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-@app.put("/edit_exercise/{exercise_id}/")
-async def edit_exercise(exercise_id: int, exercise_update: ExerciseUpdate, db: Session = Depends(get_db)):
-    exercise = db.query(Exercise).filter(Exercise.id == exercise_id).first()
+from backend.schemas import ExerciseUpdate, ExerciseResponse  # ✅ Import schema
 
-    if not exercise:
-        raise HTTPException(status_code=404, detail="Exercise not found")
+@app.put("/edit_exercise/{exercise_id}", response_model=ExerciseResponse)
+def edit_exercise(exercise_id: int, workout_data: ExerciseUpdate, db: Session = Depends(get_db)):
+    workout = db.query(Exercise).filter(Exercise.id == exercise_id).first()
+    if not workout:
+        raise HTTPException(status_code=404, detail="Workout not found")
 
-    exercise.name = exercise_update.name
+    updates = workout_data.dict(exclude_unset=True)
+
+    if "tags" in updates and isinstance(updates["tags"], list):
+        updates["tags"] = json.dumps(updates["tags"])
+
+    for attr, value in updates.items():
+        setattr(workout, attr, value)
+
     db.commit()
-    db.refresh(exercise)
+    db.refresh(workout)
 
-    return {"message": "Exercise updated successfully", "exercise": {"id": exercise.id, "name": exercise.name}}
+    return ExerciseResponse(
+        id=workout.id,
+        name=workout.name,
+        description=workout.description,
+        toughness=workout.toughness,
+        tags=json.loads(workout.tags) if workout.tags else [],
+        media_url=workout.media_url,
+        suggested_reps=workout.suggested_reps
+    )
+
+
 
 @app.put("/user/{user_id}/update")
 def update_user_info(user_id: int, data: dict, db: Session = Depends(get_db)):
@@ -341,3 +333,13 @@ def get_progress(user_id: int, db: Session = Depends(get_db)):
         }
         for log in logs
     ]
+
+@app.post("/upload_workout_image/")
+async def upload_workout_image(file: UploadFile = File(...)):
+    try:
+        contents = await file.read()
+        result = cloudinary.uploader.upload(contents, folder="workouts/")
+        return {"url": result["secure_url"]}
+    except Exception as e:
+        print(f"❌ Upload Failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to upload image")
