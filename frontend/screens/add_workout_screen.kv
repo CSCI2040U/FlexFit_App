@@ -1,129 +1,120 @@
 <AddWorkoutScreen>:
     name: "add_workout"
+    selected_image_path: ""
 
-    MDBoxLayout:
-        orientation: "vertical"
-        padding: dp(20)
-        spacing: dp(10)
-
-        MDLabel:
-            text: "Add a Workout"
-            font_style: "H5"
-            halign: "center"
-
-        MDLabel:
-            text: "Name"
-            font_style: "Subtitle2"
-            halign: "center"
-
-        MDTextField:
-            id: workout_name
-            mode: "rectangle"
-            size_hint_x: 0.9
-            pos_hint: {"center_x": 0.5}
-
-        MDLabel:
-            text: "Description"
-            font_style: "Subtitle2"
-            halign: "center"
-
-        MDTextField:
-            id: workout_description
-            mode: "rectangle"
-            size_hint_x: 0.9
-            pos_hint: {"center_x": 0.5}
-
-        MDLabel:
-            text: "Select Toughness Level"
-            font_style: "Subtitle2"
-            halign: "center"
-
+    ScrollView:
         MDBoxLayout:
-            orientation: 'horizontal'
-            MDRaisedButton:
-                text: "Easy"
-                size_hint_x: 0.3
+            orientation: "vertical"
+            padding: dp(20)
+            spacing: dp(20)
+            size_hint_y: None
+            height: self.minimum_height
+
+            MDLabel:
+                text: "Add a Workout"
+                font_style: "H4"
+                halign: "center"
+                bold: True
+                size_hint_y: None
+                height: self.texture_size[1]
+
+            MDTextField:
+                id: workout_name
+                hint_text: "Workout Name"
+                mode: "rectangle"
+                size_hint_x: 0.95
                 pos_hint: {"center_x": 0.5}
-                padding: dp(20)
-                on_release: root.set_toughness("Easy")
 
-            MDRaisedButton:
-                text: "Medium"
-                size_hint_x: 0.3
+            MDTextField:
+                id: workout_description
+                hint_text: "Workout Description"
+                mode: "rectangle"
+                size_hint_x: 0.95
                 pos_hint: {"center_x": 0.5}
-                padding: dp(20)
-                on_release: root.set_toughness("Medium")
 
-            MDRaisedButton:
-                text: "Hard"
-                size_hint_x: 0.3
-                pos_hint: {"center_x": 0.5}
-                padding: dp(20)
-                on_release: root.set_toughness("Hard")
-
-        MDLabel:
-            text: "Enter tags (comma-separated)"
-            font_style: "Subtitle2"
-            halign: "center"
-
-        MDBoxLayout:
-            orientation: 'vertical'
-            size_hint_y: 1
+            MDLabel:
+                text: "Select Toughness Level"
+                font_style: "Subtitle1"
+                halign: "center"
+                size_hint_y: None
+                height: self.texture_size[1]
 
             MDBoxLayout:
-                orientation: 'horizontal'
+                spacing: dp(10)
+                size_hint_x: 0.95
+                pos_hint: {"center_x": 0.5}
 
                 MDRaisedButton:
-                    text: "With Equipment"
-                    size_hint_x: 0.5
-                    size_hint_y: 1
-                    pos_hint: {"center_x": 0.5}
+                    text: "Easy"
                     on_release: root.set_toughness("Easy")
 
                 MDRaisedButton:
-                    text: "Without Equipment"
-                    size_hint_x: 0.5
-                    size_hint_y: 1
-                    pos_hint: {"center_x": 0.5}
+                    text: "Medium"
                     on_release: root.set_toughness("Medium")
-            MDBoxLayout:
-                orientation: 'horizontal'
+
+                MDRaisedButton:
+                    text: "Hard"
+                    on_release: root.set_toughness("Hard")
+
+            MDLabel:
+                text: "Select Categories"
+                font_style: "Subtitle1"
+                halign: "center"
+                size_hint_y: None
+                height: self.texture_size[1]
+
+            GridLayout:
+                cols: 4
+                spacing: dp(5)
+                padding: [dp(5), 0]
+                size_hint_x: 0.95
+                pos_hint: {"center_x": 0.5}
+                row_default_height: dp(20)
+                row_force_default: True
+
+                MDRaisedButton:
+                    text: "With Equipment"
+                    on_release: root.toggle_category("with equipment")
+                MDRaisedButton:
+                    text: "Without Equipment"
+                    on_release: root.toggle_category("without equipment")
                 MDRaisedButton:
                     text: "Outdoor"
-                    size_hint_x: 0.5
-                    size_hint_y: 1
-                    pos_hint: {"center_x": 0.5}
-                    on_release: root.set_toughness("Hard")
-
+                    on_release: root.toggle_category("outdoor")
                 MDRaisedButton:
                     text: "Wellness"
-                    size_hint_x: 0.5
-                    size_hint_y: 1
-                    pos_hint: {"center_x": 0.5}
-                    on_release: root.set_toughness("Hard")
+                    on_release: root.toggle_category("wellness")
 
-        MDLabel:
-            text: "Workout Reps"
-            font_style: "Subtitle2"
-            halign: "center"
+            MDLabel:
+                text: "Suggested Repetitions"
+                font_style: "Subtitle1"
+                halign: "center"
+                size_hint_y: None
+                height: self.texture_size[1]
 
-        MDTextField:
-            id: workout_reps
-            mode: "rectangle"
-            size_hint_x: 0.9
-            pos_hint: {"center_x": 0.5}
+            MDTextField:
+                id: workout_reps
+                hint_text: "Workout Reps"
+                mode: "rectangle"
+                size_hint_x: 0.95
+                pos_hint: {"center_x": 0.5}
 
-        MDRaisedButton:
-            text: "Submit Workout"
-            size_hint_x: 0.9
-            pos_hint: {"center_x": 0.5}
-            on_release: app.submit_workout()
+            MDRaisedButton:
+                text: "Choose Image"
+                size_hint_x: 0.6
+                pos_hint: {"center_x": 0.5}
+                on_release: root.select_image()
 
+            MDRaisedButton:
+                text: "Submit Workout"
+                size_hint_x: 0.6
+                pos_hint: {"center_x": 0.5}
+                on_release: root.submit_workout()
 
-        MDLabel:
-            text: "[ref=user][b]Go back[/b][/ref]"
-            markup: True
-            theme_text_color: "Custom"
-            text_color: 0.2, 0.4, 1, 1  # Blue hyperlink color
-            halign: "center"
-            on_ref_press: app.switch_to_user()
+            MDLabel:
+                text: "[ref=user][b]← Go back[/b][/ref]"
+                markup: True
+                halign: "center"
+                theme_text_color: "Custom"
+                text_color: 0.2, 0.4, 1, 1
+                on_ref_press: app.switch_to_screen("all_workouts")
