@@ -1,17 +1,12 @@
 #!/bin/bash
-
-echo "🌱 Setting up FlexFit App on Linux/macOS..."
-
-# Step 1: Create virtual environment
+echo "[🔧] Creating virtual environment..."
 python3 -m venv venv
+
+echo "[📦] Activating virtual environment..."
 source venv/bin/activate
 
-# Step 2: Upgrade pip
-echo "🔄 Upgrading pip..."
-pip install --upgrade pip
+echo "[⬇️] Installing dependencies..."
+pip install -r revised_requirements.txt
 
-# Step 3: Install dependencies
-echo "📦 Installing dependencies..."
-pip install -r requirements.txt
-
-echo "✅ Setup complete. You can now run your app!"
+echo "[🚀] Starting the FlexFit App..."
+python3 FlexFit_App-main/frontend/flexfit.py
