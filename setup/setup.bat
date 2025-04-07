@@ -6,9 +6,9 @@ echo [📦] Activating virtual environment...
 call venv\Scripts\activate
 
 echo [⬇️] Installing dependencies...
-pip install -r revised_requirements.txt
+pip install -r requirements.txt
 
 echo [🚀] Starting the FlexFit App...
-python FlexFit_App-main/frontend/flexfit.py
+python flex/frontend/flexfit.py
 
 pause

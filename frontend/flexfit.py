@@ -1,12 +1,9 @@
 import json
 import os
 from collections import Counter
-
-
-
-import multipart
-import requests
 from datetime import datetime
+
+import requests
 from kivy.clock import Clock
 from kivy.factory import Factory
 from kivy.lang import Builder
@@ -14,30 +11,22 @@ from kivy.metrics import dp
 from kivy.properties import StringProperty, ListProperty
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
 from kivy.uix.filechooser import FileChooserListView
-from kivy.uix.image import AsyncImage
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.uix.scrollview import ScrollView
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.button import MDRaisedButton
-from kivy.uix.button import Button
 from kivymd.uix.card import MDCard
 from kivymd.uix.chip import MDChip
-from kivymd.uix.dialog import MDDialog
-from kivymd.uix.gridlayout import MDGridLayout
 from kivymd.uix.label import MDLabel
-from kivymd.uix.list import OneLineListItem, OneLineAvatarListItem, ImageLeftWidget, OneLineAvatarIconListItem, \
-    IconRightWidget, IconLeftWidget, MDList
+from kivymd.uix.list import OneLineListItem, ImageLeftWidget, OneLineAvatarIconListItem, \
+    IconRightWidget, IconLeftWidget
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.pickers import MDDatePicker
-from kivymd.uix.selectioncontrol import MDCheckbox
 from kivymd.uix.textfield import MDTextField
-
-from backend.database import get_user_data
-from backend.main import get_user_info
 
 # ✅ Set Kivy to use ANGLE for OpenGL stability
 os.environ["KIVY_GL_BACKEND"] = "angle_sdl2"
