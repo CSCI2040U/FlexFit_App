@@ -38,7 +38,7 @@ This folder contains scripts to help you get the project running smoothly on dif
 Run the following file:
 
 ```
-setup.bat
+setup\setup.bat
 ```
 
 ### How:
@@ -55,7 +55,7 @@ setup.bat
 Run the following file:
 
 ```
-setup.sh
+setup\setup.sh
 ```
 
 ### How:
