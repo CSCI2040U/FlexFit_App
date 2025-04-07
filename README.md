@@ -25,9 +25,50 @@ FlexFit is a fitness application designed to help users achieve a healthier life
    git clone https://github.com/CSCI2040U/FlexFit_App.git
     ```
 
-2. Open the project in PyCharm or any IDE compatible.
 
-3. Follow the instructions on FlexFit_App/setup/README.md.
+### 🚀 FlexFit App Setup Guide
+
+Welcome to the **setup** folder for the FlexFit App!  
+This folder contains scripts to help you get the project running smoothly on different operating systems.
+
+---
+
+### 🖥️ Windows Users
+
+Run the following file:
+
+```
+setup.bat
+```
+
+### How:
+- Double-click the file, or
+- Open Command Prompt, navigate to the `setup` directory, and run:
+  ```
+  setup.bat
+  ```
+
+---
+
+### 🐧 Linux / macOS Users
+
+Run the following file:
+
+```
+setup.sh
+```
+
+### How:
+```bash
+cd setup
+chmod +x setup.sh
+./setup.sh
+```
+
+---
+
+> ⚠️ NOTE: These scripts do **not** build the Android APK.  
+> The `buildozer.spec` file is included for that. APK building is required on a Linux machine.
 
 ## Usage
 
