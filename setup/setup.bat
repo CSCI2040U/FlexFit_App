@@ -9,6 +9,6 @@ echo [⬇️] Installing dependencies...
 pip install -r requirements.txt
 
 echo [🚀] Starting the FlexFit App...
-python flex/frontend/flexfit.py
+python FlexFit/frontend/flexfit.py
 
 pause

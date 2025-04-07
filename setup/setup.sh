@@ -6,7 +6,7 @@ echo "[📦] Activating virtual environment..."
 source venv/bin/activate
 
 echo "[⬇️] Installing dependencies..."
-pip install -r revised_requirements.txt
+pip install -r requirements.txt
 
 echo "[🚀] Starting the FlexFit App..."
-python3 FlexFit_App-main/frontend/flexfit.py
+python3 FlexFit_App/frontend/flexfit.py
