@@ -15,3 +15,7 @@ requests
 requests~=2.31.0
 sqlalchemy
 uvicorn
+datetime
+collections
+typing
+dotenv
