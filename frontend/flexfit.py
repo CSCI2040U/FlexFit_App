@@ -1282,7 +1282,8 @@ Factory.register("ProgressScreen", cls=ProgressScreen)
 Factory.register("EditWorkoutScreen", cls=EditWorkoutScreen)
 
 # ✅ Load all KV Files Dynamically
-KV_DIR = "screens"
+BASE_DIR = os.path.dirname(__file__)
+KV_DIR = os.path.join(BASE_DIR, "screens")
 for file in os.listdir(KV_DIR):
     if file.endswith(".kv"):
         kv_path = os.path.join(KV_DIR, file)
