@@ -12,11 +12,17 @@ FlexFit is a fitness application designed to help users achieve a healthier life
 - [License](#license)
 
 ## Features
-- **Workout Logging:** Users can log their daily workouts to track progress over time.
-- **Search Workouts:** Users can explore new workouts tailored to their fitness goals.
-- **User Profile:** Maintain personalized fitness data for better tracking and suggestions.
-- **Exercise Database:** A rich library of exercises categorized by workout type, equipment, and difficulty level.
-- **Progress Tracking:** Visualize workout history, trends, and achievements over time.
+- **Workout Logging:** Log your completed workouts and track your progress day by day.
+- **Search Workouts:** Discover exercises tailored to your fitness goals, preferences, and equipment access.
+- **Exercise Editing & Deletion:** Edit or delete workouts, including their name, reps, difficulty, image, and more.
+- **Saved Workouts:** Bookmark your favorite exercises to easily access them later.
+- **User Profile:** Create and update your personalized profile to reflect your goals and preferences.
+- **Progress Tracking:**
+  - Log and track height, weight, and BMI over time.
+  - Visual graphs for **Height over Time**, **Weight over Time**, and **BMI trends**.
+- **Media Support:** Upload and associate images with exercises using cloud integration.
+- **Modern UI:** Smooth, intuitive interface built using KivyMD with real-time updates and interactive components.
+
 
 ## Installation
 
@@ -87,6 +93,36 @@ chmod +x setup.sh
 5. Create a new Pull Request with a clear description of the changes.
 
 We appreciate any contributions, whether it's reporting bugs, suggesting improvements, or submitting code!
+
+## Technologies Used
+
+### 🧠 **Backend**
+- **FastAPI** – High-performance Python web framework for building RESTful APIs.
+- **SQLAlchemy** – Database ORM used for handling models and queries.
+- **SQLite** – Lightweight, serverless database used for storing user data, workouts, progress logs, and achievements.
+- **Cloudinary** – Cloud-based media management for storing and serving workout images.
+
+### 🎨 **Frontend**
+- **Kivy** – Cross-platform Python framework for building multi-touch applications.
+- **KivyMD** – Material Design components for Kivy to enhance the UI/UX.
+- **Matplotlib** – Visualization library used for generating graphs and progress charts.
+- **Pillow (PIL)** – Image processing library used for handling image uploads and previews.
+
+### 🔧 **Dev Tools & Deployment**
+- **Buildozer** – Tool for packaging the app for Android (Linux-only build).
+- **Python 3.x** – Core programming language for both frontend and backend.
+- **Setup Scripts (Batch/Shell)** – Easy cross-platform setup using `.bat` and `.sh` files.
+- **Git & GitHub** – Version control and collaboration.
+
+## Team
+
+Meet the passionate developers behind FlexFit:
+
+- [@devarshh](https://github.com/devarshh)
+- [@kandoimansi](https://github.com/kandoimansi) 
+- [@patelaryan5](https://github.com/patelaryan5)
+- [@Jollysoni](https://github.com/Jollysoni)
+- [@22mihirghosh](https://github.com/22mihirghosh)
 
 ## License
 
