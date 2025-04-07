@@ -8,5 +8,4 @@ source venv/bin/activate
 echo "[⬇️] Installing dependencies..."
 pip install -r requirements.txt
 
-echo "[🚀] Starting the FlexFit App..."
-python3 FlexFit_App/frontend/flexfit.py
+echo "[🚀] You can now start the FlexFit App..."
